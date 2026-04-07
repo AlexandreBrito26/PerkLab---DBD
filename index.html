@@ -232,9 +232,17 @@ header { background:var(--bg2); border-bottom:1px solid var(--border); display:f
       <button class="btn btn-gold" onclick="exportBuild()">📋 Exportar</button>
       <button class="btn btn-g" onclick="openMapModal()">🗺️ Mapa</button>
       <button class="btn btn-g" onclick="openNotes()">📝 Notes</button>
-      <div class="legend">
-        <div class="leg-item"><div class="leg-dot p"></div> Permitido</div>
-        <div class="leg-item"><div class="leg-dot r"></div> Banido</div>
+      <div style="margin-left:auto;position:relative;display:flex;align-items:center">
+        <div class="legend-hint" id="legendHint" tabindex="0" onclick="toggleLegend()" title="Ver legenda">
+          <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;cursor:pointer;padding:4px 6px;border-radius:4px;border:1px solid transparent;transition:all .2s" id="legendBtn">⬡ LEGENDA</span>
+        </div>
+        <div id="legendPopup" style="display:none;position:absolute;bottom:calc(100% + 8px);right:0;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:8px 12px;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.5);z-index:100">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text2)"><div style="width:9px;height:9px;border-radius:2px;transform:rotate(45deg);background:var(--purple)"></div> Perk permitido</div>
+            <div style="display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text2)"><div style="width:9px;height:9px;border-radius:2px;transform:rotate(45deg);background:var(--red2)"></div> Perk banido</div>
+            <div style="display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text2)"><div style="width:9px;height:9px;border-radius:2px;transform:rotate(45deg);background:var(--border)"></div> Slot vazio</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -419,7 +427,6 @@ const PERKS={
     {id:'s_resilience',name:'Resilience',           icon:'💪',char:'General',  tier:'tier4',  banned:false,desc:'+9% velocidade de ações quando ferido. Vault +9%.'},
     {id:'s_inner',   name:'Inner Strength',         icon:'🏋️',char:'Nancy',    tier:'tier4',  banned:false,desc:'Limpar totem: heal em locker em 8s sem med-kit.'},
     {id:'s_fogwise', name:'Fogwise',                icon:'🌫️',char:'Vittorio', tier:'tier4',  banned:false,desc:'Great Skill Check revela aura do killer por 6s.'},
-    {id:'s_otr2',    name:'Off The Record',         icon:'📵',char:'General',  tier:'tier4',  banned:true, desc:'Banido — ver General tier.'},
     {id:'s_bond',    name:'Bond',                   icon:'🔗',char:'Dwight',   tier:'tier3',  banned:false,desc:'Revela auras de todos survivors dentro de 36m.'},
     {id:'s_empathy', name:'Empathy',                icon:'❤️',char:'Claudette',tier:'tier3',  banned:false,desc:'Revela auras de survivors feridos em até 128m.'},
     {id:'s_alert',   name:'Alert',                  icon:'🔔',char:'Feng',     tier:'tier3',  banned:false,desc:'Loud action killer em 32m: revela aura do killer por 3s.'},
@@ -485,6 +492,7 @@ function setRole(r){
   document.getElementById('btnS').className='role-btn'+(r==='survivor'?' as':'');
   renderBuild();
   renderPicker();
+  validate();
 }
 
 // ══════════════════════════════════
@@ -501,12 +509,14 @@ function renderKillers(f=''){
     </div>`).join('');
 }
 function selK(id){
+  const prev=selKiller?.id;
   selKiller=KILLERS.find(k=>k.id===id);
+  if(prev!==id){kBuild={perks:[null,null,null,null],addons:[null,null],offering:null};}
   renderKillers(document.getElementById('killerSearch').value.toLowerCase());
   document.getElementById('selName').textContent=selKiller.name;
   const ti=TIER_INFO[selKiller.tier];
   document.getElementById('selSub').textContent=`Tier: ${ti?.label||selKiller.tier} • ${selKiller.banned?'⛔ BANIDO':'✓ Permitido'}`;
-  validate();
+  renderBuild();renderPicker();validate();
 }
 
 // ══════════════════════════════════
@@ -532,10 +542,12 @@ function renderPicker(){
 
 function addPerk(id){
   if(role==='killer'){
+    if(kBuild.perks.includes(id)){toast('Perk já está no build!');return;}
     const e=kBuild.perks.indexOf(null);
     if(e>=0){kBuild.perks[e]=id;}
     else{toast('Build cheio! Clique num slot para trocar.');return;}
   } else {
+    for(const s of sBuild){if(s.perks.includes(id)){toast('Perk já está neste survivor!');return;}}
     let ok=false;
     for(const s of sBuild){const e=s.perks.indexOf(null);if(e>=0){s.perks[e]=id;ok=true;break;}}
     if(!ok){toast('Todos os builds estão cheios!');return;}
@@ -606,8 +618,10 @@ function filterMSlot(){
   fillMSlot(r,document.getElementById('mSlotSearch').value.toLowerCase());
 }
 function fillMSlot(r,search){
-  const perks=PERKS[r];
-  const list=search?perks.filter(p=>p.name.toLowerCase().includes(search)):perks;
+  const all=PERKS[r];
+  // For add-on/item slots, show all perks (no dedicated data); for perk slots, filter out addons/offerings
+  const perks=all;
+  const list=search?perks.filter(p=>p.name.toLowerCase().includes(search)||p.char.toLowerCase().includes(search)):perks;
   document.getElementById('mSlotGrid').innerHTML=list.map(p=>`
     <div class="pi ${p.banned?'banned':''}" onclick="pickSlot('${p.id}')" title="${p.char} — ${p.desc}">
       <div class="pi-in"><span class="pi-em">${p.icon}</span></div>
@@ -851,6 +865,19 @@ function exportBuild(){
     });
   }
   navigator.clipboard.writeText(t).then(()=>toast('📋 Copiado para o clipboard!'));
+}
+
+function toggleLegend(){
+  const p=document.getElementById('legendPopup');
+  const b=document.getElementById('legendBtn');
+  const open=p.style.display==='block';
+  p.style.display=open?'none':'block';
+  b.style.borderColor=open?'transparent':'var(--border)';
+  b.style.color=open?'var(--text3)':'var(--text2)';
+  if(!open){
+    const close=e=>{if(!document.getElementById('legendHint').contains(e.target)){p.style.display='none';b.style.borderColor='transparent';b.style.color='var(--text3)';document.removeEventListener('click',close);}};
+    setTimeout(()=>document.addEventListener('click',close),0);
+  }
 }
 
 function toast(msg){
