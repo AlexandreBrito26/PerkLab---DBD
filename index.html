@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PerkLab — DBD Competitive Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0d0c12; --bg2:#13121a; --bg3:#1a1924; --bg4:#201f2d; --border:#2e2c42;
+  --purple:#7b3fa0; --purple2:#9b52c4; --purple-bg:rgba(123,63,160,0.18); --purple-glow:rgba(123,63,160,0.35);
+  --red:#9b2020; --red2:#c42b2b; --red-bg:rgba(155,32,32,0.18); --red-glow:rgba(155,32,32,0.35);
+  --gold:#b8902a; --gold2:#d4a843;
+  --text:#e8e4f0; --text2:#9490a8; --text3:#5a5670;
+}
+body { font-family:'Rajdhani',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+body::before { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px); pointer-events:none; z-index:9999; }
+
+/* HEADER */
+header { background:var(--bg2); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 24px; height:56px; position:sticky; top:0; z-index:200; box-shadow:0 2px 30px rgba(0,0,0,0.6); }
+.logo { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:4px; color:var(--purple2); text-shadow:0 0 20px var(--purple-glow); display:flex; align-items:center; gap:10px; }
+.logo-sub { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text3); letter-spacing:2px; }
+.hright { display:flex; align-items:center; gap:10px; }
+.balance-pill { background:var(--bg3); border:1px solid var(--purple); border-radius:6px; padding:4px 12px; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--purple2); letter-spacing:1px; cursor:pointer; transition:all .2s; }
+.balance-pill:hover { background:var(--purple-bg); }
+.role-toggle { display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+.role-btn { padding:5px 14px; border:none; background:var(--bg3); color:var(--text3); font-family:'Rajdhani',sans-serif; font-weight:700; font-size:12px; letter-spacing:1px; cursor:pointer; transition:all .2s; }
+.role-btn.ak { background:var(--red-bg); color:var(--red2); }
+.role-btn.as { background:var(--purple-bg); color:var(--purple2); }
+
+/* LAYOUT */
+.app { display:grid; grid-template-columns:260px 1fr 290px; height:calc(100vh - 56px); }
+
+/* LEFT */
+.left-panel { background:var(--bg2); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+.ph { padding:12px 14px 8px; font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:2px; color:var(--text2); border-bottom:1px solid var(--border); }
+.ps { padding:8px 12px; border-bottom:1px solid var(--border); }
+.ps input { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:5px; padding:5px 10px; color:var(--text); font-family:'Rajdhani',sans-serif; font-size:13px; outline:none; transition:border-color .2s; }
+.ps input:focus { border-color:var(--purple); }
+.ps input::placeholder { color:var(--text3); }
+.killer-grid { flex:1; overflow-y:auto; display:grid; grid-template-columns:1fr 1fr; gap:5px; padding:8px; align-content:start; }
+.killer-grid::-webkit-scrollbar { width:4px; }
+.killer-grid::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.kcard { position:relative; border-radius:7px; overflow:hidden; cursor:pointer; border:2px solid transparent; transition:all .2s; aspect-ratio:3/4; background:var(--bg3); }
+.kcard:hover { border-color:var(--purple); transform:scale(1.04); z-index:2; }
+.kcard.sel { border-color:var(--purple2); box-shadow:0 0 14px var(--purple-glow); }
+.kcard.ban { filter:grayscale(1) brightness(0.3); cursor:not-allowed; position:relative; }
+.kcard.ban::after { content:'✕ BANIDO'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(155,32,32,0.55); font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:2px; color:var(--red2); border:1px solid var(--red); }
+.kcard .ke { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:38px; }
+.kcard .kn { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.88)); padding:18px 5px 5px; font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:1px; color:#fff; text-align:center; }
+
+/* CENTER */
+.center { background:var(--bg); display:flex; flex-direction:column; overflow:hidden; }
+.sel-bar { background:var(--bg2); border-bottom:1px solid var(--border); padding:10px 20px; display:flex; align-items:center; gap:14px; }
+.sel-name { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:3px; }
+.sel-bal { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--purple2); background:var(--purple-bg); border:1px solid var(--purple); border-radius:4px; padding:2px 7px; }
+.s-ok { margin-left:auto; font-family:'Share Tech Mono',monospace; font-size:10px; color:#4caf50; background:rgba(76,175,80,0.1); border:1px solid rgba(76,175,80,0.3); border-radius:4px; padding:2px 8px; }
+.s-err { margin-left:auto; font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--red2); background:var(--red-bg); border:1px solid var(--red); border-radius:4px; padding:2px 8px; }
+
+.psearch { padding:10px 20px 0; display:flex; gap:8px; }
+.psearch input { flex:1; background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:6px 12px; color:var(--text); font-family:'Rajdhani',sans-serif; font-size:13px; outline:none; transition:border-color .2s; }
+.psearch input:focus { border-color:var(--purple); }
+.psearch input::placeholder { color:var(--text3); }
+
+/* Perk picker grid */
+.picker { padding:10px 20px 0; }
+.pgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(58px,1fr)); gap:5px; max-height:220px; overflow-y:auto; }
+.pgrid::-webkit-scrollbar { width:4px; }
+.pgrid::-webkit-scrollbar-thumb { background:var(--border); }
+.pi { position:relative; width:100%; aspect-ratio:1; cursor:pointer; }
+.pi-in { width:78%; height:78%; margin:11%; transform:rotate(45deg); border:1.5px solid var(--border); background:var(--bg3); border-radius:3px; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.pi:hover .pi-in { border-color:var(--purple2); background:var(--purple-bg); transform:rotate(45deg) scale(1.1); }
+.pi.banned .pi-in { border-color:var(--red2); background:var(--red-bg); }
+.pi.banned:hover .pi-in { opacity:.5; }
+.pi.pickedon .pi-in { border-color:var(--purple2); background:var(--purple-bg); box-shadow:0 0 8px var(--purple-glow); }
+.pi-em { transform:rotate(-45deg); font-size:20px; line-height:1; }
+.pi-nm { position:absolute; bottom:0; left:0; right:0; text-align:center; font-size:7.5px; color:var(--text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 1px; }
+.pi.banned .pi-nm { color:var(--red2); }
+.pi.pickedon .pi-nm { color:var(--purple2); }
+.bx { position:absolute; top:5px; right:2px; font-size:7px; color:var(--red2); font-weight:900; pointer-events:none; }
+
+/* Build area */
+.build-area { flex:1; overflow-y:auto; padding:14px 20px; }
+.build-area::-webkit-scrollbar { width:4px; }
+.build-area::-webkit-scrollbar-thumb { background:var(--border); }
+.bst { font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:2px; color:var(--text3); margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+.bst::after { content:''; flex:1; height:1px; background:var(--border); }
+.slot-row { display:flex; align-items:center; gap:7px; margin-bottom:28px; flex-wrap:wrap; }
+.ssep { width:1px; height:50px; background:var(--border); margin:0 3px; }
+
+/* Diamond slot */
+.slot { position:relative; width:62px; height:62px; cursor:pointer; }
+.slot-in { width:100%; height:100%; transform:rotate(45deg); border:2px solid var(--border); background:var(--bg3); transition:all .2s; display:flex; align-items:center; justify-content:center; border-radius:4px; overflow:hidden; }
+.slot:hover .slot-in { border-color:var(--purple2); background:var(--bg4); }
+.slot.filled .slot-in { border-color:var(--purple); background:var(--purple-bg); box-shadow:0 0 12px var(--purple-glow); }
+.slot.bperk .slot-in { border-color:var(--red2); background:var(--red-bg); box-shadow:0 0 10px var(--red-glow); }
+.slot.aslot .slot-in { border-radius:6px; }
+.slot.oslot { width:50px; height:50px; }
+.slot.oslot .slot-in { border-radius:50%; transform:none; }
+.slot-em { transform:rotate(-45deg); font-size:24px; pointer-events:none; }
+.slot.oslot .slot-em { transform:none; }
+.slot-lbl { position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:7.5px; color:var(--text3); white-space:nowrap; }
+.slot.filled .slot-lbl { color:var(--purple2); }
+.slot.bperk .slot-lbl { color:var(--red2); }
+
+/* Survivor rows */
+.srows { display:flex; flex-direction:column; gap:14px; }
+.srow { background:var(--bg2); border:1px solid var(--border); border-radius:9px; padding:12px 14px; display:flex; align-items:center; gap:10px; }
+.snum { font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--text3); width:24px; text-align:center; }
+.sname { background:transparent; border:none; border-bottom:1px solid var(--border); color:var(--text); font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:600; width:110px; outline:none; padding:2px 4px; transition:border-color .2s; }
+.sname:focus { border-color:var(--purple); }
+.sname::placeholder { color:var(--text3); }
+
+/* Action bar */
+.abar { padding:10px 20px; background:var(--bg2); border-top:1px solid var(--border); display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
+.legend { display:flex; gap:12px; margin-left:auto; align-items:center; }
+.leg-item { display:flex; align-items:center; gap:5px; font-size:10px; color:var(--text3); }
+.leg-dot { width:9px; height:9px; border-radius:2px; transform:rotate(45deg); }
+.leg-dot.p { background:var(--purple); }
+.leg-dot.r { background:var(--red2); }
+
+/* RIGHT */
+.right-panel { background:var(--bg2); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+.rtabs { display:flex; border-bottom:1px solid var(--border); }
+.rtab { flex:1; padding:9px 4px; border:none; background:transparent; color:var(--text3); font-family:'Rajdhani',sans-serif; font-weight:700; font-size:10px; letter-spacing:1px; cursor:pointer; transition:all .2s; border-bottom:2px solid transparent; }
+.rtab.ac { color:var(--purple2); border-bottom-color:var(--purple); }
+.rtab:hover:not(.ac) { color:var(--text2); }
+.rcontent { flex:1; overflow-y:auto; padding:12px; }
+.rcontent::-webkit-scrollbar { width:4px; }
+.rcontent::-webkit-scrollbar-thumb { background:var(--border); }
+.rblock { margin-bottom:12px; background:var(--bg3); border:1px solid var(--border); border-radius:7px; overflow:hidden; }
+.rbt { padding:7px 10px; font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:1.5px; color:var(--text2); background:var(--bg4); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.ban-list { padding:7px 9px; display:flex; flex-wrap:wrap; gap:4px; min-height:30px; }
+.bchip { display:flex; align-items:center; gap:3px; padding:2px 7px 2px 5px; border-radius:4px; font-size:10px; font-weight:600; border:1px solid var(--red); background:var(--red-bg); color:var(--red2); white-space:nowrap; }
+.bchip .ce { font-size:12px; }
+.achip { border-color:var(--purple); background:var(--purple-bg); color:var(--purple2); }
+.tier-badge { display:inline-flex; align-items:center; padding:1px 6px; border-radius:3px; font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1px; font-weight:700; }
+.tg { background:rgba(180,140,255,0.15); color:#b48cff; border:1px solid rgba(180,140,255,0.3); }
+.t5 { background:rgba(123,63,160,0.2); color:#c084f5; border:1px solid rgba(123,63,160,0.5); }
+.t4 { background:rgba(100,60,140,0.2); color:#a569c9; border:1px solid rgba(100,60,140,0.4); }
+.t3 { background:rgba(80,55,110,0.2); color:#8a5aa8; border:1px solid rgba(80,55,110,0.4); }
+.t2 { background:rgba(60,50,90,0.2); color:#7060a0; border:1px solid rgba(60,50,90,0.4); }
+.t1 { background:rgba(50,45,70,0.2); color:#60558a; border:1px solid rgba(50,45,70,0.4); }
+
+/* BUTTONS */
+.btn { padding:6px 13px; border:none; border-radius:5px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:12px; letter-spacing:1px; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:5px; }
+.btn-p { background:var(--purple); color:#fff; }
+.btn-p:hover { background:var(--purple2); box-shadow:0 3px 14px var(--purple-glow); }
+.btn-r { background:var(--red); color:#fff; }
+.btn-r:hover { background:var(--red2); }
+.btn-g { background:var(--bg3); border:1px solid var(--border); color:var(--text2); }
+.btn-g:hover { border-color:var(--purple); color:var(--purple2); }
+.btn-gold { background:var(--gold); color:#111; }
+.btn-gold:hover { background:var(--gold2); }
+.sm { padding:4px 9px; font-size:11px; }
+
+/* MODAL */
+.mover { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:1000; align-items:center; justify-content:center; }
+.mover.open { display:flex; }
+.modal { background:var(--bg2); border:1px solid var(--border); border-radius:11px; padding:22px; max-width:470px; width:95%; max-height:85vh; overflow-y:auto; box-shadow:0 8px 60px rgba(0,0,0,0.8); }
+.mtitle { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; color:var(--purple2); margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; }
+.mc { background:none; border:none; color:var(--text3); cursor:pointer; font-size:16px; }
+.mc:hover { color:var(--text); }
+.msearch { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:5px; padding:7px 11px; color:var(--text); font-family:'Rajdhani',sans-serif; font-size:13px; outline:none; margin-bottom:10px; }
+.msearch:focus { border-color:var(--purple); }
+.msearch::placeholder { color:var(--text3); }
+.mgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(58px,1fr)); gap:5px; max-height:48vh; overflow-y:auto; padding-right:3px; }
+.mgrid::-webkit-scrollbar { width:4px; }
+.mgrid::-webkit-scrollbar-thumb { background:var(--border); }
+
+/* TOAST */
+#toast { position:fixed; bottom:18px; right:18px; background:var(--bg2); border:1px solid var(--purple); border-radius:7px; padding:9px 16px; font-size:12px; font-weight:600; color:var(--text); z-index:9999; transform:translateY(80px); opacity:0; transition:all .3s; box-shadow:0 4px 20px rgba(0,0,0,0.5); max-width:300px; }
+#toast.show { transform:translateY(0); opacity:1; }
+
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+@media(max-width:1100px){ .app{ grid-template-columns:220px 1fr 250px; } }
+@media(max-width:780px){ .app{ grid-template-columns:1fr; height:auto; } .left-panel{ max-height:260px; } .right-panel{ max-height:380px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">🩸 PerkLab</div>
+    <div class="logo-sub">DBD COMPETITIVE BUILDER</div>
+  </div>
+  <div class="hright">
+    <div class="balance-pill" onclick="toast('Em breve: múltiplos balanceamentos')">⚖️ DBD SA ▾</div>
+    <div class="role-toggle">
+      <button class="role-btn ak" id="btnK" onclick="setRole('killer')">💀 KILLER</button>
+      <button class="role-btn" id="btnS" onclick="setRole('survivor')">🏃 SURVIVOR</button>
+    </div>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- LEFT: KILLER SELECT -->
+  <div class="left-panel">
+    <div class="ph">💀 KILLER SELECTION</div>
+    <div class="ps"><input type="text" placeholder="Buscar killer..." id="killerSearch" oninput="filterKillers()"></div>
+    <div class="killer-grid" id="killerGrid"></div>
+  </div>
+
+  <!-- CENTER: BUILD -->
+  <div class="center">
+    <div class="sel-bar">
+      <div>
+        <div class="sel-name" id="selName">Selecione um Killer</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px" id="selSub">Nenhum selecionado</div>
+      </div>
+      <div class="sel-bal">DBD SA</div>
+      <div class="s-ok" id="statusBar" title="">✓ SEM ERROS</div>
+    </div>
+
+    <div class="psearch">
+      <input type="text" placeholder="🔍 Buscar perk..." id="perkSearch" oninput="renderPicker()">
+      <button class="btn btn-g sm" onclick="clearBuild()">🗑️</button>
+      <button class="btn btn-g sm" onclick="randomBuild()">🎲</button>
+    </div>
+
+    <div class="picker"><div class="pgrid" id="perkGrid"></div></div>
+
+    <div class="build-area" id="buildArea"></div>
+
+    <div class="abar">
+      <button class="btn btn-p" onclick="saveBuild()">💾 Salvar</button>
+      <button class="btn btn-gold" onclick="exportBuild()">📋 Exportar</button>
+      <button class="btn btn-g" onclick="openMapModal()">🗺️ Mapa</button>
+      <button class="btn btn-g" onclick="openNotes()">📝 Notes</button>
+      <div class="legend">
+        <div class="leg-item"><div class="leg-dot p"></div> Permitido</div>
+        <div class="leg-item"><div class="leg-dot r"></div> Banido</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: RULES -->
+  <div class="right-panel">
+    <div class="rtabs">
+      <button class="rtab ac" onclick="setRTab('tiers')">TIERS</button>
+      <button class="rtab" onclick="setRTab('bans')">BANS</button>
+      <button class="rtab" onclick="setRTab('items')">ITENS</button>
+      <button class="rtab" onclick="setRTab('mapas')">MAPAS</button>
+    </div>
+    <div class="rcontent" id="rcontent"></div>
+  </div>
+</div>
+
+<!-- MODAL: SLOT -->
+<div class="mover" id="mSlot" onclick="if(event.target===this)closeMSlot()">
+  <div class="modal">
+    <div class="mtitle"><span id="mSlotTitle">Selecionar Perk</span><button class="mc" onclick="closeMSlot()">✕</button></div>
+    <input class="msearch" type="text" placeholder="Buscar..." id="mSlotSearch" oninput="filterMSlot()">
+    <div class="mgrid" id="mSlotGrid"></div>
+    <div style="margin-top:10px;display:flex;gap:7px;justify-content:flex-end">
+      <button class="btn btn-g sm" onclick="clearSlot()">Limpar slot</button>
+      <button class="btn btn-g sm" onclick="closeMSlot()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NOTES -->
+<div class="mover" id="mNotes" onclick="if(event.target===this)closeNotes()">
+  <div class="modal" style="max-width:400px">
+    <div class="mtitle"><span>📝 Notes — DBD SA</span><button class="mc" onclick="closeNotes()">✕</button></div>
+    <div style="background:var(--bg3);border-radius:7px;padding:11px;margin-bottom:10px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;color:var(--text2);margin-bottom:6px">GLOBAL NOTES</div>
+      <div style="font-size:11px;color:var(--text);line-height:1.7;white-space:pre-line" id="gNotes"></div>
+    </div>
+    <div style="background:var(--bg3);border-radius:7px;padding:11px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;color:var(--text2);margin-bottom:6px">KILLER NOTES</div>
+      <div style="font-size:11px;color:var(--text);line-height:1.7" id="kNotes"></div>
+    </div>
+    <div style="margin-top:12px;text-align:right"><button class="btn btn-p sm" onclick="closeNotes()">OK</button></div>
+  </div>
+</div>
+
+<!-- MODAL: MAP -->
+<div class="mover" id="mMap" onclick="if(event.target===this)closeMapModal()">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div class="mtitle" style="justify-content:center">🗺️ Map Information</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:14px;white-space:pre-line" id="mapText"></div>
+    <button class="btn btn-p" onclick="closeMapModal()">OK</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════
+// DATA
+// ══════════════════════════════════
+const KILLERS=[
+  {id:'trapper',    name:'Trapper',       icon:'🪤', tier:'general', banned:false, map:'Coldwind Farm — Rancid Abbatoir'},
+  {id:'wraith',     name:'Wraith',        icon:'🔔', tier:'tier3',   banned:false, map:'MacMillan Estate — Coal Tower I'},
+  {id:'hillbilly',  name:'Hillbilly',     icon:'⛏️', tier:'general', banned:false, map:'Backwater Swamp — Grim Pantry'},
+  {id:'nurse',      name:'Nurse',         icon:'🏥', tier:'general', banned:true,  map:'— BANIDA —'},
+  {id:'shape',      name:'Shape',         icon:'🎭', tier:'general', banned:false, map:'Haddonfield — Lampkin Lane'},
+  {id:'hag',        name:'Hag',           icon:'🧙', tier:'general', banned:false, map:'Backwater Swamp — Pale Rose'},
+  {id:'doctor',     name:'Doctor',        icon:'⚡', tier:'tier4',   banned:false, map:"Léry's — Treatment Theatre"},
+  {id:'huntress',   name:'Huntress',      icon:'🪓', tier:'general', banned:false, map:"Red Forest — Mother's Dwelling"},
+  {id:'leatherface',name:'Leatherface',   icon:'🔪', tier:'tier3',   banned:false, map:'Coldwind Farm — Rancid Abbatoir'},
+  {id:'freddy',     name:'Freddy',        icon:'💤', tier:'tier4',   banned:false, map:'Badham Preschool I'},
+  {id:'pig',        name:'Pig',           icon:'🐷', tier:'tier4',   banned:false, map:'Gideon Meat Plant — Game Map'},
+  {id:'clown',      name:'Clown',         icon:'🤡', tier:'tier3',   banned:false, map:'Coldwind Farm — Thompson House'},
+  {id:'spirit',     name:'Spirit',        icon:'👻', tier:'general', banned:false, map:'Yamaoka — Family Residence'},
+  {id:'legion',     name:'Legion',        icon:'🎸', tier:'tier3',   banned:false, map:'Mount Ormond Resort'},
+  {id:'plague',     name:'Plague',        icon:'🧟', tier:'tier4',   banned:false, map:'Temple of Purgation'},
+  {id:'ghostface',  name:'Ghost Face',    icon:'👘', tier:'tier4',   banned:false, map:'Haddonfield — Lampkin Lane'},
+  {id:'demo',       name:'Demogorgon',    icon:'🕳️', tier:'tier4',   banned:false, map:'Underground Complex'},
+  {id:'oni',        name:'Oni',           icon:'🗡️', tier:'tier4',   banned:false, map:'Yamaoka — Sanctum of Wrath'},
+  {id:'deathslinger',name:'Deathslinger', icon:'🔫', tier:'tier4',   banned:false, map:'Dead Dawg Saloon'},
+  {id:'ph',         name:'Pyramid Head',  icon:'🔺', tier:'general', banned:false, map:'Silent Hill — Midwich'},
+  {id:'twins',      name:'Twins',         icon:'👥', tier:'tier2',   banned:false, map:'Pale Rose — Swamp'},
+  {id:'trickster',  name:'Trickster',     icon:'🎯', tier:'tier3',   banned:false, map:'Raccoon City P1'},
+  {id:'nemesis',    name:'Nemesis',       icon:'🧠', tier:'tier4',   banned:false, map:'Raccoon City P2'},
+  {id:'pinhead',    name:'Pinhead',       icon:'🧊', tier:'general', banned:false, map:'Gideon Meat Plant — Game Map'},
+  {id:'artist',     name:'Artist',        icon:'🖤', tier:'general', banned:false, map:'Shattered Square'},
+  {id:'onryo',      name:'Onryō',         icon:'📺', tier:'tier4',   banned:false, map:'Raccoon City P1'},
+  {id:'dredge',     name:'Dredge',        icon:'🌑', tier:'tier4',   banned:false, map:"Léry's — Disturbed Ward"},
+  {id:'wesker',     name:'Wesker',        icon:'🧬', tier:'general', banned:false, map:'Raccoon City P2'},
+  {id:'knight',     name:'Knight',        icon:'🛡️', tier:'tier4',   banned:false, map:'Shattered Square'},
+  {id:'skull',      name:'Skull Merchant',icon:'💀', tier:'tier2',   banned:false, map:'Gideon Meat Plant — Game Map'},
+  {id:'sing',       name:'Singularity',   icon:'⚛️', tier:'tier3',   banned:false, map:'Nostromo Wreckage'},
+  {id:'xeno',       name:'Xenomorph',     icon:'👽', tier:'tier4',   banned:false, map:'Nostromo Wreckage'},
+  {id:'chucky',     name:'Chucky',        icon:'🪆', tier:'general', banned:false, map:'Raccoon City P1'},
+  {id:'unknown',    name:'Unknown',       icon:'❓', tier:'tier3',   banned:false, map:'Badham Preschool'},
+  {id:'lich',       name:'Lich',          icon:'💜', tier:'tier3',   banned:false, map:'Forgotten Ruins'},
+  {id:'dracula',    name:'Dracula',       icon:'🦇', tier:'tier4',   banned:false, map:'Château Dimmet'},
+];
+
+const TIER_INFO={
+  general:{label:'General',cls:'tg',desc:'Perks mais poderosos — muitos banidos. Efeitos de aura global e regressão automática.'},
+  tier5:  {label:'Tier 5', cls:'t5',desc:'Perks muito fortes. Liberados com restrições específicas por balanceamento.'},
+  tier4:  {label:'Tier 4', cls:'t4',desc:'Perks fortes. Liberados com condições específicas definidas no balanceamento.'},
+  tier3:  {label:'Tier 3', cls:'t3',desc:'Perks moderados. Uso geral permitido sem restrições especiais.'},
+  tier2:  {label:'Tier 2', cls:'t2',desc:'Perks situacionais. Pouca restrição — quase todos liberados.'},
+  tier1:  {label:'Tier 1', cls:'t1',desc:'Perks fracos. Totalmente liberados — sem restrições.'},
+};
+
+const PERKS={
+  killer:[
+    {id:'k_ruin',      name:'Hex: Ruin',              icon:'🕯️',char:'Hag',          tier:'general',banned:true, desc:'Regressão automática em gens não sendo reparados. Banido no General.'},
+    {id:'k_devour',    name:'Hex: Devour Hope',        icon:'🔥',char:'Hag',          tier:'general',banned:true, desc:'Tokens por rescue permitem matar sem gancho. Banido.'},
+    {id:'k_noed',      name:'Hex: NOED',               icon:'💀',char:'General',      tier:'general',banned:true, desc:'Expõe todos survivors quando EGC inicia. Banido.'},
+    {id:'k_painres',   name:'Pain Resonance',          icon:'🎸',char:'Artist',       tier:'general',banned:true, desc:'15% regressão por hook em Scourge Hook. Banido.'},
+    {id:'k_deadlock',  name:'Deadlock',                icon:'🔒',char:'Pinhead',      tier:'general',banned:true, desc:'Bloqueia gen mais avançado após hook. Banido.'},
+    {id:'k_corrupt',   name:'Corrupt Intervention',    icon:'🧟',char:'Plague',       tier:'general',banned:true, desc:'Bloqueia 3 gens por 100s no início. Banido.'},
+    {id:'k_grim',      name:'Grim Embrace',            icon:'🤗',char:'Artist',       tier:'general',banned:true, desc:'Cada hook único bloqueia todos gens por 16s. Banido.'},
+    {id:'k_bbq',       name:'Barbecue & Chili',        icon:'🍖',char:'Leatherface',  tier:'general',banned:false,desc:'Revela auras de survivors a 60m após hook. +25% BP.'},
+    {id:'k_lethal',    name:'Lethal Pursuer',          icon:'🎯',char:'Nemesis',      tier:'general',banned:false,desc:'Revela auras de todos survivors por 9s no início.'},
+    {id:'k_dms',       name:'Dead Man\'s Switch',      icon:'🔌',char:'Deathslinger', tier:'general',banned:false,desc:'Gen fica bloqueado se survivor parar de reparar após hook.'},
+    {id:'k_pop',       name:'Pop Goes The Weasel',     icon:'💥',char:'Clown',        tier:'general',banned:false,desc:'Kick gen após hook: grande regressão de progresso.'},
+    {id:'k_stbfl',     name:'Save The Best For Last',  icon:'⏳',char:'Nurse',        tier:'general',banned:false,desc:'Hits em não-obsessão reduzem cooldown de ataque.'},
+    {id:'k_enduring',  name:'Enduring',                icon:'🔩',char:'Hillbilly',    tier:'general',banned:false,desc:'Reduz stun de pallet em 75%.'},
+    {id:'k_spiritfury',name:'Spirit Fury',             icon:'⚡',char:'Spirit',       tier:'general',banned:false,desc:'Após quebrar 4 pallets, próxima quebra é instantânea.'},
+    {id:'k_undying',   name:'Hex: Undying',            icon:'♾️',char:'Dracula',      tier:'general',banned:false,desc:'Revela survivors perto de totems. Transfere hex ao limpar.'},
+    {id:'k_eruption',  name:'Eruption',                icon:'🌋',char:'Nemesis',      tier:'general',banned:false,desc:'Gen explode e incapacita survivor ao ser derrubado.'},
+    {id:'k_ult',       name:'Ultimate Weapon',         icon:'🗡️',char:'Xenomorph',    tier:'general',banned:false,desc:'Abrir locker: survivors em 32m ficam Cegos por 50s.'},
+    {id:'k_monitor',   name:'Monitor & Abuse',         icon:'📺',char:'Doctor',       tier:'tier4',  banned:false,desc:'TR menor fora de chase, maior dentro de chase.'},
+    {id:'k_bamboozle', name:'Bamboozle',               icon:'🎪',char:'Clown',        tier:'tier4',  banned:false,desc:'Vault 15% mais rápido e bloqueia window por 12s.'},
+    {id:'k_surge',     name:'Surge',                   icon:'💥',char:'Demogorgon',   tier:'tier4',  banned:false,desc:'Injuriar causa regressão em gens próximos.'},
+    {id:'k_overcharge',name:'Overcharge',              icon:'⚡',char:'Doctor',       tier:'tier4',  banned:false,desc:'Kick gen aumenta dificuldade de skill check drasticamente.'},
+    {id:'k_tinkerer',  name:'Tinkerer',                icon:'🔧',char:'Hillbilly',    tier:'tier4',  banned:false,desc:'Gen a 70% concede Undetectable por 16s e Haste.'},
+    {id:'k_knockout',  name:'Knock Out',               icon:'🥊',char:'Leatherface',  tier:'tier4',  banned:false,desc:'Hit oculta aura de survivors no dying state por 25s.'},
+    {id:'k_haunted',   name:'Hex: Haunted Ground',     icon:'👻',char:'Spirit',       tier:'tier4',  banned:false,desc:'Totem cleansado expõe todos survivors por 60s.'},
+    {id:'k_starstruck',name:'Starstruck',              icon:'⭐',char:'Trickster',    tier:'tier4',  banned:false,desc:'Carregar survivor expõe survivors dentro do TR.'},
+    {id:'k_noWayOut',  name:'No Way Out',              icon:'🚫',char:'Trickster',    tier:'tier4',  banned:false,desc:'Hooks únicos adicionam delay para abrir portões no EGC.'},
+    {id:'k_thrilling', name:'Thrilling Tremors',       icon:'🌪️',char:'Ghost Face',   tier:'tier4',  banned:false,desc:'Carregar survivor bloqueia gens não sendo reparados por 16s.'},
+    {id:'k_iears',     name:'I\'m All Ears',           icon:'👂',char:'Ghost Face',   tier:'tier4',  banned:false,desc:'Rushed action revela aura do survivor por 8s.'},
+    {id:'k_discordance',name:'Discordance',            icon:'🎶',char:'Legion',       tier:'tier4',  banned:false,desc:'Revela gens sendo reparados em co-op e emite som.'},
+    {id:'k_surveillance',name:'Surveillance',         icon:'📷',char:'Pig',          tier:'tier4',  banned:false,desc:'Gens regredindo aparecem em branco, completados mostram regressão.'},
+    {id:'k_callbrine', name:'Call Of Brine',           icon:'🌊',char:'Onryō',        tier:'tier4',  banned:false,desc:'Kick gen: regressa 150% e revela aura enquanto regride.'},
+    {id:'k_dissolution',name:'Dissolution',           icon:'💧',char:'Dredge',       tier:'tier4',  banned:false,desc:'Rushed vault em chase bloqueia o pallet/window.'},
+    {id:'k_myc',       name:'Make Your Choice',        icon:'☠️',char:'Pig',          tier:'tier4',  banned:false,desc:'Rescue a 32m+: survivor fica Exposed por 60s.'},
+    {id:'k_hubris',    name:'Hubris',                  icon:'👑',char:'Knight',       tier:'tier4',  banned:false,desc:'Ser stunado por pallet concede Exposed naquele survivor.'},
+    {id:'k_nowhere',   name:'Nowhere To Hide',         icon:'🚷',char:'Knight',       tier:'tier4',  banned:false,desc:'Kick gen revela auras de survivors em 24m por 5s.'},
+    {id:'k_oppression',name:'Oppression',              icon:'😤',char:'Twins',        tier:'tier4',  banned:false,desc:'Kick gen faz 2 outros gens aleatórios explodirem.'},
+    {id:'k_gearhead',  name:'Gearhead',                icon:'⚙️',char:'Deathslinger', tier:'tier4',  banned:false,desc:'Após perda de estado, revela gens sendo reparados por 20s.'},
+    {id:'k_rancor',    name:'Rancor',                  icon:'😡',char:'Spirit',       tier:'tier4',  banned:false,desc:'Gens completados revelam auras. Obsessão exposta no EGC.'},
+    {id:'k_sloppy',    name:'Sloppy Butcher',          icon:'🩸',char:'General',      tier:'tier3',  banned:false,desc:'Ataques básicos aplicam Mangled e Hemorrhage.'},
+    {id:'k_deerstalker',name:'Deerstalker',            icon:'🦌',char:'General',      tier:'tier3',  banned:false,desc:'Revela aura de survivors no dying state dentro de 40m.'},
+    {id:'k_whispers',  name:'Whispers',                icon:'💬',char:'General',      tier:'tier3',  banned:false,desc:'Som de sussurro quando survivor está dentro de 32m.'},
+    {id:'k_coulro',    name:'Coulrophobia',            icon:'🤡',char:'Clown',        tier:'tier3',  banned:false,desc:'Survivors dentro do TR heal 100% mais lento.'},
+    {id:'k_ironmaiden',name:'Iron Maiden',             icon:'⛓️',char:'Legion',       tier:'tier3',  banned:false,desc:'Abrir locker mais rápido. Sair do locker: Exposed por 20s.'},
+    {id:'k_bloodecho', name:'Blood Echo',              icon:'🩸',char:'Oni',          tier:'tier3',  banned:false,desc:'Hook: survivors feridos ficam Exaustos e com Hemorrhage.'},
+    {id:'k_zanshin',   name:'Zanshin Tactics',         icon:'🗡️',char:'Oni',          tier:'tier2',  banned:false,desc:'Em chase: auras de janelas e pallets reveladas.'},
+    {id:'k_predator',  name:'Predator',                icon:'🦅',char:'Wraith',       tier:'tier2',  banned:false,desc:'Scratch marks ficam mais próximos — tracking mais fácil.'},
+    {id:'k_territorial',name:'Territorial Imperative', icon:'🗺️',char:'Huntress',     tier:'tier1',  banned:false,desc:'Revela aura de survivors que entram no porão quando próximo.'},
+  ],
+  survivor:[
+    {id:'s_ds',      name:'Decisive Strike',        icon:'🗡️',char:'Laurie',   tier:'general',banned:true, desc:'Escape do grasp após unhook por 40-60s. Banido.'},
+    {id:'s_otr',     name:'Off The Record',         icon:'📵',char:'General',  tier:'general',banned:true, desc:'Endurance + aura bloqueada após unhook por 80s. Banido.'},
+    {id:'s_borrowed',name:'Borrowed Time',          icon:'⏰',char:'Bill',     tier:'general',banned:true, desc:'Endurance ao fazer unhook dentro do TR. Banido.'},
+    {id:'s_unbreak', name:'Unbreakable',            icon:'💎',char:'Bill',     tier:'general',banned:true, desc:'Recupera do dying state uma vez por trial. Banido.'},
+    {id:'s_dh',      name:'Dead Hard',              icon:'💨',char:'David',    tier:'general',banned:true, desc:'Dash invencível quando ferido. Banido.'},
+    {id:'s_coh',     name:'Boon: Circle Of Healing',icon:'⭕',char:'General',  tier:'general',banned:true, desc:'Heal sem med-kit no range do boon. Banido.'},
+    {id:'s_sb',      name:'Sprint Burst',           icon:'💨',char:'Meg',      tier:'general',banned:true, desc:'150% velocidade ao começar a correr. Banido.'},
+    {id:'s_distort', name:'Distortion',             icon:'🌀',char:'Jeff',     tier:'general',banned:false,desc:'Tokens bloqueiam leitura de aura. Recarga no TR do killer.'},
+    {id:'s_kindred', name:'Kindred',                icon:'👨‍👩‍👧',char:'General',  tier:'general',banned:false,desc:'Revela auras de survivors e killer ao redor do hook.'},
+    {id:'s_adren',   name:'Adrenaline',             icon:'💉',char:'Meg',      tier:'general',banned:false,desc:'Último gen: heal instantâneo + Haste por 5s.'},
+    {id:'s_windows', name:'Windows Of Opportunity', icon:'🪟',char:'Kate',     tier:'general',banned:false,desc:'Auras de pallets, janelas e paredes reveladas em 28m.'},
+    {id:'s_lithe',   name:'Lithe',                  icon:'🤸',char:'Feng',     tier:'general',banned:false,desc:'150% por 3s após rushed vault. Causa Exaustão.'},
+    {id:'s_balanced',name:'Balanced Landing',       icon:'🤸',char:'Nea',      tier:'general',banned:false,desc:'Sem stagger ao cair + Haste 150% por 3s. Exaustão.'},
+    {id:'s_prove',   name:'Prove Thyself',          icon:'🤜',char:'Dwight',   tier:'general',banned:false,desc:'+15% reparo por survivor em 4m. +50% BP ações coop.'},
+    {id:'s_ironwill',name:'Iron Will',              icon:'💪',char:'Jake',     tier:'general',banned:false,desc:'Sons de dor suprimidos 100% quando ferido.'},
+    {id:'s_made',    name:'Made For This',          icon:'🦾',char:'Gabriel',  tier:'general',banned:false,desc:'+1% Haste quando ferido. Endurance após unhook.'},
+    {id:'s_dramaturgy',name:'Dramaturgy',           icon:'🎭',char:'Nicolas Cage',tier:'general',banned:false,desc:'150% por 3s + efeito aleatório positivo. Exaustão.'},
+    {id:'s_weave',   name:'Weave Attunement',       icon:'🕸️',char:'Sable',    tier:'general',banned:false,desc:'Killer pega/larga item → revela aura do killer e esconde a sua.'},
+    {id:'s_lucky',   name:'Lucky Break',            icon:'🍀',char:'Ripley',   tier:'general',banned:false,desc:'Sem rastros de sangue/scratch marks por 120s total.'},
+    {id:'s_headon',  name:'Head On',                icon:'🤜',char:'Jeff',     tier:'tier4',  banned:false,desc:'3s no locker: stunna killer ao abrir. Exaustão por 20s.'},
+    {id:'s_overcome',name:'Overcome',               icon:'🏃',char:'Gabriel',  tier:'tier4',  banned:false,desc:'150% por 4s ao perder estado de saúde. Exaustão.'},
+    {id:'s_smash',   name:'Smash Hit',              icon:'💥',char:'Thalita',  tier:'tier4',  banned:false,desc:'Stun killer com pallet → 150% por 4s. Exaustão.'},
+    {id:'s_resilience',name:'Resilience',           icon:'💪',char:'General',  tier:'tier4',  banned:false,desc:'+9% velocidade de ações quando ferido. Vault +9%.'},
+    {id:'s_inner',   name:'Inner Strength',         icon:'🏋️',char:'Nancy',    tier:'tier4',  banned:false,desc:'Limpar totem: heal em locker em 8s sem med-kit.'},
+    {id:'s_fogwise', name:'Fogwise',                icon:'🌫️',char:'Vittorio', tier:'tier4',  banned:false,desc:'Great Skill Check revela aura do killer por 6s.'},
+    {id:'s_otr2',    name:'Off The Record',         icon:'📵',char:'General',  tier:'tier4',  banned:true, desc:'Banido — ver General tier.'},
+    {id:'s_bond',    name:'Bond',                   icon:'🔗',char:'Dwight',   tier:'tier3',  banned:false,desc:'Revela auras de todos survivors dentro de 36m.'},
+    {id:'s_empathy', name:'Empathy',                icon:'❤️',char:'Claudette',tier:'tier3',  banned:false,desc:'Revela auras de survivors feridos em até 128m.'},
+    {id:'s_alert',   name:'Alert',                  icon:'🔔',char:'Feng',     tier:'tier3',  banned:false,desc:'Loud action killer em 32m: revela aura do killer por 3s.'},
+    {id:'s_urban',   name:'Urban Evasion',          icon:'🏙️',char:'Nea',      tier:'tier3',  banned:false,desc:'+100% velocidade enquanto agachado.'},
+    {id:'s_dance',   name:'Dance With Me',          icon:'💃',char:'Kate',     tier:'tier3',  banned:false,desc:'Após rushed vault/agachamento: sem scratch marks por 3s.'},
+    {id:'s_innerf',  name:'Inner Focus',            icon:'🔵',char:'Haddie',   tier:'tier3',  banned:false,desc:'Ver scratch marks de teammates. Killer revelado ao perder estado.'},
+    {id:'s_overzeal',name:'Overzealous',            icon:'⚡',char:'Haddie',   tier:'tier3',  banned:false,desc:'Cleanse totem: +14% velocidade de reparo pelo resto do trial.'},
+    {id:'s_quickg',  name:'Quick Gambit',           icon:'♟️',char:'Vittorio', tier:'tier3',  banned:false,desc:'Em chase próxima: +10% reparo para survivors em gens em 32m.'},
+    {id:'s_friendly',name:'Friendly Competition',   icon:'🏅',char:'Thalita',  tier:'tier3',  banned:false,desc:'Completar gen com alguém: +25% reparo por 45s.'},
+    {id:'s_saboteur',name:'Saboteur',               icon:'🔨',char:'Jake',     tier:'tier3',  banned:false,desc:'Sabota ganchos sem toolbox. Ganchos levam 70s para respawnar.'},
+    {id:'s_selfcare',name:'Self Care',              icon:'🩺',char:'Claudette',tier:'tier2',  banned:false,desc:'Heal sem med-kit a 50% da velocidade normal.'},
+    {id:'s_botany',  name:'Botany Knowledge',       icon:'🌿',char:'Claudette',tier:'tier2',  banned:false,desc:'+33% heal speed, -33% consumo de item de cura.'},
+    {id:'s_vigil',   name:'Vigil',                  icon:'🔭',char:'Quentin',  tier:'tier2',  banned:false,desc:'Recupera de estados negativos (Exaustão, etc.) 30% mais rápido.'},
+    {id:'s_smallg',  name:'Small Game',             icon:'🐾',char:'General',  tier:'tier1',  banned:false,desc:'Alerta ao olhar para armadilha ou totem a menos de 8m.'},
+    {id:'s_openhand',name:'Open Handed',            icon:'✋',char:'Ace',      tier:'tier1',  banned:false,desc:'+12m para todas as leituras de aura de todos os survivors.'},
+    {id:'s_plunder', name:"Plunderer's Instinct",   icon:'💰',char:'General',  tier:'tier1',  banned:false,desc:'Revela chests e itens no chão em até 64m.'},
+  ]
+};
+
+const BANNED_COMBOS={
+  killer:[
+    {perks:['k_enduring','k_spiritfury'],label:'Enduring + Spirit Fury'},
+    {perks:['k_enduring','k_hubris'],    label:'Enduring + Hubris'},
+    {perks:['k_painres','k_grim'],       label:'Pain Resonance + Grim Embrace'},
+  ],
+  survivor:[
+    {perks:['s_ds','s_unbreak'],         label:'Decisive Strike + Unbreakable'},
+  ]
+};
+
+const GLOBAL_NOTES=`• Mapas mudados ou novos adicionados como opção
+• Ban Second Wind confirmado — muito forte no meta
+• Grim Embrace: all ban confirmado
+• Pain Resonance: banido individualmente
+• Consulte balanceddaydlight.com para atualizações`;
+
+// ══════════════════════════════════
+// STATE
+// ══════════════════════════════════
+let role='killer';
+let selKiller=null;
+let kBuild={perks:[null,null,null,null],addons:[null,null],offering:null};
+let sBuild=Array.from({length:4},()=>({name:'',perks:[null,null,null,null],items:[null,null]}));
+let rtab='tiers';
+let mctx=null;
+
+// ══════════════════════════════════
+// INIT
+// ══════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  renderKillers();
+  renderBuild();
+  renderPicker();
+  renderRules();
+});
+
+// ══════════════════════════════════
+// ROLE
+// ══════════════════════════════════
+function setRole(r){
+  role=r;
+  document.getElementById('btnK').className='role-btn'+(r==='killer'?' ak':'');
+  document.getElementById('btnS').className='role-btn'+(r==='survivor'?' as':'');
+  renderBuild();
+  renderPicker();
+}
+
+// ══════════════════════════════════
+// KILLERS
+// ══════════════════════════════════
+function filterKillers(){renderKillers(document.getElementById('killerSearch').value.toLowerCase());}
+function renderKillers(f=''){
+  const list=f?KILLERS.filter(k=>k.name.toLowerCase().includes(f)):KILLERS;
+  document.getElementById('killerGrid').innerHTML=list.map(k=>`
+    <div class="kcard ${k.banned?'ban':''} ${selKiller?.id===k.id?'sel':''}"
+         onclick="${k.banned?"toast('⛔ Killer BANIDO: "+k.name+"')":'selK("'+k.id+'")'}">
+      <div class="ke">${k.icon}</div>
+      <div class="kn">${k.name}</div>
+    </div>`).join('');
+}
+function selK(id){
+  selKiller=KILLERS.find(k=>k.id===id);
+  renderKillers(document.getElementById('killerSearch').value.toLowerCase());
+  document.getElementById('selName').textContent=selKiller.name;
+  const ti=TIER_INFO[selKiller.tier];
+  document.getElementById('selSub').textContent=`Tier: ${ti?.label||selKiller.tier} • ${selKiller.banned?'⛔ BANIDO':'✓ Permitido'}`;
+  validate();
+}
+
+// ══════════════════════════════════
+// PICKER
+// ══════════════════════════════════
+function renderPicker(){
+  const search=document.getElementById('perkSearch').value.toLowerCase();
+  const perks=PERKS[role];
+  const filtered=search?perks.filter(p=>p.name.toLowerCase().includes(search)||p.char.toLowerCase().includes(search)):perks;
+  document.getElementById('perkGrid').innerHTML=filtered.map(p=>{
+    const on=role==='killer'
+      ?kBuild.perks.includes(p.id)
+      :sBuild.some(s=>s.perks.includes(p.id));
+    return `<div class="pi ${p.banned?'banned':''} ${on?'pickedon':''}"
+      onclick="${p.banned?"toast('🚫 Banido: "+p.name.replace(/'/g,"\\'")+"')":'addPerk("'+p.id+'")'}"
+      title="${p.char} — ${p.desc}">
+      <div class="pi-in"><span class="pi-em">${p.icon}</span></div>
+      <div class="pi-nm">${p.name}</div>
+      ${p.banned?'<div class="bx">✕</div>':''}
+    </div>`;
+  }).join('');
+}
+
+function addPerk(id){
+  if(role==='killer'){
+    const e=kBuild.perks.indexOf(null);
+    if(e>=0){kBuild.perks[e]=id;}
+    else{toast('Build cheio! Clique num slot para trocar.');return;}
+  } else {
+    let ok=false;
+    for(const s of sBuild){const e=s.perks.indexOf(null);if(e>=0){s.perks[e]=id;ok=true;break;}}
+    if(!ok){toast('Todos os builds estão cheios!');return;}
+  }
+  renderBuild();renderPicker();validate();
+}
+
+// ══════════════════════════════════
+// BUILD
+// ══════════════════════════════════
+function renderBuild(){
+  const area=document.getElementById('buildArea');
+  if(role==='killer'){
+    area.innerHTML=`
+      <div class="bst">💀 KILLER BUILD</div>
+      <div class="slot-row" style="margin-bottom:30px">
+        ${kBuild.perks.map((id,i)=>mkSlot(id,'kp',i,'Perk '+(i+1))).join('')}
+        <div class="ssep"></div>
+        ${[0,1].map(i=>mkSlot(kBuild.addons[i],'ka',i,'Add-on '+(i+1),true)).join('')}
+        <div class="ssep"></div>
+        ${mkSlot(kBuild.offering,'ko',0,'Offering',false,true)}
+      </div>`;
+  } else {
+    area.innerHTML=`
+      <div class="bst">🏃 SURVIVOR BUILDS</div>
+      <div class="srows">
+        ${sBuild.map((s,si)=>`
+          <div class="srow">
+            <div class="snum">${si+1}</div>
+            <input class="sname" placeholder="Survivor ${si+1}..." value="${s.name}"
+                   oninput="sBuild[${si}].name=this.value">
+            <div class="slot-row" style="margin:0;gap:5px">
+              ${s.perks.map((id,pi)=>mkSlot(id,'sp',pi,'',false,false,si)).join('')}
+              <div class="ssep" style="height:38px"></div>
+              ${[0,1].map(ii=>mkSlot(s.items[ii],'si',ii,'',true,false,si)).join('')}
+            </div>
+          </div>`).join('')}
+      </div>`;
+  }
+}
+
+function mkSlot(id,type,idx,lbl='',isAddon=false,isOff=false,si=null){
+  const pl=PERKS[role];
+  const p=id?pl.find(pk=>pk.id===id):null;
+  const banned=p?.banned;
+  const cls=`slot ${p?'filled':''} ${banned?'bperk':''} ${isAddon?'aslot':''} ${isOff?'oslot':''}`;
+  const sip=si!==null?`,${si}`:'';
+  return `<div class="${cls}" onclick="openMSlot('${type}',${idx}${sip})" title="${p?p.name:'Vazio'}">
+    <div class="slot-in">${p?`<span class="slot-em">${p.icon}</span>`:''}</div>
+    ${lbl?`<div class="slot-lbl">${p?p.name.substring(0,9)+(p.name.length>9?'…':''):lbl}</div>`:''}
+  </div>`;
+}
+
+// ══════════════════════════════════
+// SLOT MODAL
+// ══════════════════════════════════
+function openMSlot(type,idx,si=null){
+  mctx={type,idx,si};
+  const r=type.startsWith('k')?'killer':'survivor';
+  document.getElementById('mSlotTitle').textContent=
+    type==='ka'?'🔮 Add-on':type==='ko'?'🕯️ Offering':type==='si'?'🎒 Item':'⬡ Selecionar Perk';
+  document.getElementById('mSlotSearch').value='';
+  fillMSlot(r,'');
+  document.getElementById('mSlot').classList.add('open');
+}
+function filterMSlot(){
+  const r=mctx?.type?.startsWith('k')?'killer':'survivor';
+  fillMSlot(r,document.getElementById('mSlotSearch').value.toLowerCase());
+}
+function fillMSlot(r,search){
+  const perks=PERKS[r];
+  const list=search?perks.filter(p=>p.name.toLowerCase().includes(search)):perks;
+  document.getElementById('mSlotGrid').innerHTML=list.map(p=>`
+    <div class="pi ${p.banned?'banned':''}" onclick="pickSlot('${p.id}')" title="${p.char} — ${p.desc}">
+      <div class="pi-in"><span class="pi-em">${p.icon}</span></div>
+      <div class="pi-nm">${p.name}</div>
+      ${p.banned?'<div class="bx">✕</div>':''}
+    </div>`).join('');
+}
+function pickSlot(id){
+  const {type,idx,si}=mctx;
+  if(type==='kp')kBuild.perks[idx]=id;
+  else if(type==='ka')kBuild.addons[idx]=id;
+  else if(type==='ko')kBuild.offering=id;
+  else if(type==='sp')sBuild[si].perks[idx]=id;
+  else if(type==='si')sBuild[si].items[idx]=id;
+  closeMSlot();renderBuild();renderPicker();validate();
+}
+function clearSlot(){
+  const {type,idx,si}=mctx;
+  if(type==='kp')kBuild.perks[idx]=null;
+  else if(type==='ka')kBuild.addons[idx]=null;
+  else if(type==='ko')kBuild.offering=null;
+  else if(type==='sp')sBuild[si].perks[idx]=null;
+  else if(type==='si')sBuild[si].items[idx]=null;
+  closeMSlot();renderBuild();renderPicker();validate();
+}
+function closeMSlot(){document.getElementById('mSlot').classList.remove('open');mctx=null;}
+
+// ══════════════════════════════════
+// VALIDATE
+// ══════════════════════════════════
+function validate(){
+  const errors=[];
+  const perks=PERKS[role];
+  if(role==='killer'){
+    kBuild.perks.filter(Boolean).forEach(id=>{
+      const p=perks.find(pk=>pk.id===id);
+      if(p?.banned)errors.push(`Perk banido: ${p.name}`);
+    });
+    BANNED_COMBOS.killer.forEach(c=>{
+      if(c.perks.every(id=>kBuild.perks.includes(id)))errors.push(`Combo banido: ${c.label}`);
+    });
+    if(selKiller?.banned)errors.push(`Killer banido: ${selKiller.name}`);
+  } else {
+    sBuild.forEach((s,si)=>{
+      s.perks.filter(Boolean).forEach(id=>{
+        const p=perks.find(pk=>pk.id===id);
+        if(p?.banned)errors.push(`S${si+1} — Banido: ${p.name}`);
+      });
+      BANNED_COMBOS.survivor.forEach(c=>{
+        if(c.perks.every(id=>s.perks.includes(id)))errors.push(`S${si+1} — Combo: ${c.label}`);
+      });
+    });
+  }
+  const bar=document.getElementById('statusBar');
+  if(errors.length===0){bar.className='s-ok';bar.textContent='✓ SEM ERROS';bar.title='';}
+  else{bar.className='s-err';bar.textContent=`⚠ ${errors.length} ERRO${errors.length>1?'S':''}`;bar.title=errors.join('\n');}
+}
+
+// ══════════════════════════════════
+// RULES PANEL
+// ══════════════════════════════════
+function setRTab(tab){
+  rtab=tab;
+  document.querySelectorAll('.rtab').forEach((b,i)=>b.classList.toggle('ac',['tiers','bans','items','mapas'][i]===tab));
+  renderRules();
+}
+function renderRules(){
+  const c=document.getElementById('rcontent');
+  if(rtab==='tiers')rTiers(c);
+  else if(rtab==='bans')rBans(c);
+  else if(rtab==='items')rItems(c);
+  else rMapas(c);
+}
+
+function rTiers(c){
+  const tiers=['general','tier5','tier4','tier3','tier2','tier1'];
+  c.innerHTML=tiers.map(t=>{
+    const ti=TIER_INFO[t];
+    const perks=PERKS[role].filter(p=>p.tier===t);
+    const banned=perks.filter(p=>p.banned);
+    const allowed=perks.filter(p=>!p.banned);
+    return `<div class="rblock">
+      <div class="rbt">
+        <span class="tier-badge ${ti.cls}">${ti.label}</span>
+        <span style="font-size:9px;color:var(--text3)">${perks.length}p · <span style="color:var(--red2)">${banned.length} ban</span></span>
+      </div>
+      <div style="padding:7px 10px;font-size:10px;color:var(--text2);line-height:1.5">${ti.desc}</div>
+      <div class="ban-list">
+        ${banned.map(p=>`<div class="bchip"><span class="ce">${p.icon}</span>${p.name}</div>`).join('')}
+        ${allowed.slice(0,4).map(p=>`<div class="bchip achip"><span class="ce">${p.icon}</span>${p.name}</div>`).join('')}
+        ${allowed.length>4?`<span style="font-size:9px;color:var(--text3);align-self:center">+${allowed.length-4}...</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function rBans(c){
+  const perks=PERKS[role];
+  const banned=perks.filter(p=>p.banned);
+  const allowed=perks.filter(p=>!p.banned);
+  const combos=BANNED_COMBOS[role];
+  c.innerHTML=`
+    <div class="rblock">
+      <div class="rbt"><span>🚫 PERKS BANIDOS</span><span style="font-size:9px;color:var(--red2)">${banned.length}</span></div>
+      <div class="ban-list">${banned.map(p=>`<div class="bchip"><span class="ce">${p.icon}</span>${p.name}</div>`).join('')||'<span style="font-size:10px;color:var(--text3)">Nenhum</span>'}</div>
+    </div>
+    <div class="rblock">
+      <div class="rbt">⛔ COMBOS BANIDOS</div>
+      <div style="padding:8px">
+        ${combos.map(c=>{
+          const names=c.perks.map(id=>{const p=perks.find(pk=>pk.id===id);return p?`${p.icon} ${p.name}`:id;}).join(' + ');
+          return `<div style="background:var(--red-bg);border:1px solid var(--red);border-radius:5px;padding:7px 9px;margin-bottom:5px;font-size:11px;color:var(--red2)">${names}</div>`;
+        }).join('')||'<span style="font-size:10px;color:var(--text3)">Nenhum</span>'}
+      </div>
+    </div>
+    <div class="rblock">
+      <div class="rbt"><span>✅ PERMITIDOS</span><span style="font-size:9px;color:var(--purple2)">${allowed.length}</span></div>
+      <div class="ban-list">${allowed.map(p=>`<div class="bchip achip"><span class="ce">${p.icon}</span>${p.name}</div>`).join('')}</div>
+    </div>`;
+}
+
+function rItems(c){
+  c.innerHTML=`
+    <div class="rblock"><div class="rbt">🎒 ITENS PERMITIDOS</div>
+      <div class="ban-list">
+        ${['🔦 Flashlight','🩹 Med-Kit','🔧 Toolbox','🗝️ Key','🗺️ Map'].map(i=>`<div class="bchip achip">${i}</div>`).join('')}
+      </div>
+    </div>
+    <div class="rblock"><div class="rbt">🚫 ADD-ONS BANIDOS</div>
+      <div class="ban-list">
+        ${['"All Seeing" - Spirit','"All Seeing" - Blood','Iri Head (Huntress)','Iridescent Queen'].map(i=>`<div class="bchip">⛔ ${i}</div>`).join('')}
+      </div>
+    </div>
+    <div class="rblock"><div class="rbt">📦 RARIDADES ADD-ON</div>
+      <div class="ban-list">
+        <div class="bchip achip">⬜ Common</div>
+        <div class="bchip achip">🟩 Uncommon</div>
+        <div class="bchip achip">🟦 Rare</div>
+        <div class="bchip achip">🟪 Very Rare</div>
+        <div class="bchip" style="font-size:9px">⛔ Iri: caso a caso</div>
+      </div>
+    </div>
+    <div class="rblock"><div class="rbt">🕯️ OFFERINGS PERMITIDAS</div>
+      <div style="padding:8px 10px;font-size:10px;color:var(--text2);line-height:1.8">
+        Bloodied Blueprint ✓ · Torn Blueprint ✓<br>
+        Annotated Blueprint ✓ · Vigo's Blueprint ✓<br>
+        Scratched Coin ✓ · Mouldy Oak ✓<br>
+        <span style="color:var(--red2)">⛔ Shroud: verificar com organizador</span>
+      </div>
+    </div>
+    <div class="rblock"><div class="rbt">📋 PERK TIERS PERMITIDOS</div>
+      <div style="padding:8px 10px;font-size:10px;color:var(--text2);line-height:1.8">
+        Killer: General, Tier 5, 4, 3, 2, 1<br>
+        Survivor: General, Tier 5, 4, 3, 2, 1<br>
+        <span style="color:var(--text3)">Selecione o tier na aba Tiers para ver quais perks de cada tier são banidos.</span>
+      </div>
+    </div>`;
+}
+
+function rMapas(c){
+  const banned=KILLERS.filter(k=>k.banned);
+  const allowed=KILLERS.filter(k=>!k.banned);
+  c.innerHTML=`
+    <div class="rblock"><div class="rbt">⛔ KILLERS BANIDOS</div>
+      <div class="ban-list">${banned.map(k=>`<div class="bchip"><span class="ce">${k.icon}</span>${k.name}</div>`).join('')||'<span style="font-size:10px;color:var(--text3)">Nenhum</span>'}</div>
+    </div>
+    <div class="rblock"><div class="rbt">🗺️ MAPA POR KILLER</div>
+      <div style="padding:8px">
+        ${allowed.map(k=>`
+          <div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:14px">${k.icon}</span>
+            <div>
+              <div style="font-size:11px;font-weight:700">${k.name}</div>
+              <div style="font-size:9px;color:var(--gold2)">${k.map}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════
+// NOTES / MAP
+// ══════════════════════════════════
+function openNotes(){
+  document.getElementById('gNotes').textContent=GLOBAL_NOTES;
+  document.getElementById('kNotes').textContent=selKiller
+    ?(selKiller.banned?`⛔ ${selKiller.name} está BANIDO neste balanceamento.`:`Nenhuma nota especial para ${selKiller.name}.`)
+    :'Nenhum killer selecionado.';
+  document.getElementById('mNotes').classList.add('open');
+}
+function closeNotes(){document.getElementById('mNotes').classList.remove('open');}
+
+function openMapModal(){
+  const txt=selKiller
+    ?(selKiller.banned?`⛔ ${selKiller.name} está BANIDO.\n\nEste killer não pode ser usado neste balanceamento.`
+     :`Ao jogar contra ${selKiller.name}, o mapa é:\n\n🗺️ ${selKiller.map}\n\nConsulte o balanceamento oficial para condições especiais.`)
+    :'Selecione um killer para ver as informações de mapa.';
+  document.getElementById('mapText').textContent=txt;
+  document.getElementById('mMap').classList.add('open');
+}
+function closeMapModal(){document.getElementById('mMap').classList.remove('open');}
+
+// ══════════════════════════════════
+// ACTIONS
+// ══════════════════════════════════
+function clearBuild(){
+  if(role==='killer')kBuild={perks:[null,null,null,null],addons:[null,null],offering:null};
+  else sBuild=Array.from({length:4},()=>({name:'',perks:[null,null,null,null],items:[null,null]}));
+  renderBuild();renderPicker();validate();
+}
+
+function randomBuild(){
+  const allowed=PERKS[role].filter(p=>!p.banned);
+  const sh=[...allowed].sort(()=>Math.random()-.5);
+  if(role==='killer'){kBuild.perks=sh.slice(0,4).map(p=>p.id);}
+  else{sBuild.forEach((s,i)=>{s.perks=sh.slice(i*4,(i+1)*4).map(p=>p.id);});}
+  renderBuild();renderPicker();validate();toast('🎲 Build aleatório gerado!');
+}
+
+function saveBuild(){
+  const profiles=JSON.parse(localStorage.getItem('perklab_v2')||'[]');
+  profiles.unshift({id:Date.now(),role,killer:selKiller?.name||null,
+    data:role==='killer'?JSON.parse(JSON.stringify(kBuild)):JSON.parse(JSON.stringify(sBuild)),
+    date:new Date().toLocaleDateString('pt-BR')});
+  localStorage.setItem('perklab_v2',JSON.stringify(profiles));
+  toast('💾 Build salvo!');
+}
+
+function exportBuild(){
+  let t=`🩸 PERKLAB — DBD SA\n📅 ${new Date().toLocaleString('pt-BR')}\n\n`;
+  if(role==='killer'){
+    t+=`💀 KILLER: ${selKiller?.name||'N/A'}\n\nPERKS:\n`;
+    kBuild.perks.forEach((id,i)=>{const p=PERKS.killer.find(pk=>pk.id===id);t+=`  ${i+1}. ${p?p.icon+' '+p.name:'(vazio)'}\n`;});
+    t+=`\nADD-ONS:\n`;
+    kBuild.addons.forEach((id,i)=>{const p=PERKS.killer.find(pk=>pk.id===id);t+=`  ${i+1}. ${p?p.icon+' '+p.name:'(vazio)'}\n`;});
+  } else {
+    t+=`🏃 SURVIVORS:\n`;
+    sBuild.forEach((s,si)=>{
+      t+=`\n  ${si+1}. ${s.name||'Survivor '+(si+1)}\n`;
+      s.perks.forEach((id,pi)=>{const p=PERKS.survivor.find(pk=>pk.id===id);t+=`    Perk ${pi+1}: ${p?p.icon+' '+p.name:'(vazio)'}\n`;});
+    });
+  }
+  navigator.clipboard.writeText(t).then(()=>toast('📋 Copiado para o clipboard!'));
+}
+
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>
