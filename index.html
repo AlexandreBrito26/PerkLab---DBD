@@ -48,6 +48,7 @@ header { background:var(--bg2); border-bottom:1px solid var(--border); display:f
 .kcard.ban { filter:grayscale(1) brightness(0.3); cursor:not-allowed; position:relative; }
 .kcard.ban::after { content:'✕ BANIDO'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(155,32,32,0.55); font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:2px; color:var(--red2); border:1px solid var(--red); }
 .kcard .ke { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:38px; }
+.kcard .kimg { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
 .kcard .kn { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.88)); padding:18px 5px 5px; font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:1px; color:#fff; text-align:center; }
 
 /* CENTER */
@@ -75,6 +76,7 @@ header { background:var(--bg2); border-bottom:1px solid var(--border); display:f
 .pi.banned:hover .pi-in { opacity:.5; }
 .pi.pickedon .pi-in { border-color:var(--purple2); background:var(--purple-bg); box-shadow:0 0 8px var(--purple-glow); }
 .pi-em { transform:rotate(-45deg); font-size:20px; line-height:1; }
+.pi-img { transform:rotate(-45deg); width:80%; height:80%; object-fit:contain; display:block; border-radius:2px; }
 .pi-nm { position:absolute; bottom:0; left:0; right:0; text-align:center; font-size:7.5px; color:var(--text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 1px; }
 .pi.banned .pi-nm { color:var(--red2); }
 .pi.pickedon .pi-nm { color:var(--purple2); }
@@ -99,7 +101,9 @@ header { background:var(--bg2); border-bottom:1px solid var(--border); display:f
 .slot.oslot { width:50px; height:50px; }
 .slot.oslot .slot-in { border-radius:50%; transform:none; }
 .slot-em { transform:rotate(-45deg); font-size:24px; pointer-events:none; }
+.slot-img { transform:rotate(-45deg); width:85%; height:85%; object-fit:contain; pointer-events:none; border-radius:2px; }
 .slot.oslot .slot-em { transform:none; }
+.slot.oslot .slot-img { transform:none; border-radius:50%; }
 .slot-lbl { position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:7.5px; color:var(--text3); white-space:nowrap; }
 .slot.filled .slot-lbl { color:var(--purple2); }
 .slot.bperk .slot-lbl { color:var(--red2); }
@@ -303,43 +307,82 @@ header { background:var(--bg2); border-bottom:1px solid var(--border); display:f
 // ══════════════════════════════════
 // DATA
 // ══════════════════════════════════
+// Helper: DBD wiki image base URL
+const W='https://static.wikia.nocookie.net/deadbydaylight/images';
+
 const KILLERS=[
-  {id:'trapper',    name:'Trapper',       icon:'🪤', tier:'general', banned:false, map:'Coldwind Farm — Rancid Abbatoir'},
-  {id:'wraith',     name:'Wraith',        icon:'🔔', tier:'tier3',   banned:false, map:'MacMillan Estate — Coal Tower I'},
-  {id:'hillbilly',  name:'Hillbilly',     icon:'⛏️', tier:'general', banned:false, map:'Backwater Swamp — Grim Pantry'},
-  {id:'nurse',      name:'Nurse',         icon:'🏥', tier:'general', banned:true,  map:'— BANIDA —'},
-  {id:'shape',      name:'Shape',         icon:'🎭', tier:'general', banned:false, map:'Haddonfield — Lampkin Lane'},
-  {id:'hag',        name:'Hag',           icon:'🧙', tier:'general', banned:false, map:'Backwater Swamp — Pale Rose'},
-  {id:'doctor',     name:'Doctor',        icon:'⚡', tier:'tier4',   banned:false, map:"Léry's — Treatment Theatre"},
-  {id:'huntress',   name:'Huntress',      icon:'🪓', tier:'general', banned:false, map:"Red Forest — Mother's Dwelling"},
-  {id:'leatherface',name:'Leatherface',   icon:'🔪', tier:'tier3',   banned:false, map:'Coldwind Farm — Rancid Abbatoir'},
-  {id:'freddy',     name:'Freddy',        icon:'💤', tier:'tier4',   banned:false, map:'Badham Preschool I'},
-  {id:'pig',        name:'Pig',           icon:'🐷', tier:'tier4',   banned:false, map:'Gideon Meat Plant — Game Map'},
-  {id:'clown',      name:'Clown',         icon:'🤡', tier:'tier3',   banned:false, map:'Coldwind Farm — Thompson House'},
-  {id:'spirit',     name:'Spirit',        icon:'👻', tier:'general', banned:false, map:'Yamaoka — Family Residence'},
-  {id:'legion',     name:'Legion',        icon:'🎸', tier:'tier3',   banned:false, map:'Mount Ormond Resort'},
-  {id:'plague',     name:'Plague',        icon:'🧟', tier:'tier4',   banned:false, map:'Temple of Purgation'},
-  {id:'ghostface',  name:'Ghost Face',    icon:'👘', tier:'tier4',   banned:false, map:'Haddonfield — Lampkin Lane'},
-  {id:'demo',       name:'Demogorgon',    icon:'🕳️', tier:'tier4',   banned:false, map:'Underground Complex'},
-  {id:'oni',        name:'Oni',           icon:'🗡️', tier:'tier4',   banned:false, map:'Yamaoka — Sanctum of Wrath'},
-  {id:'deathslinger',name:'Deathslinger', icon:'🔫', tier:'tier4',   banned:false, map:'Dead Dawg Saloon'},
-  {id:'ph',         name:'Pyramid Head',  icon:'🔺', tier:'general', banned:false, map:'Silent Hill — Midwich'},
-  {id:'twins',      name:'Twins',         icon:'👥', tier:'tier2',   banned:false, map:'Pale Rose — Swamp'},
-  {id:'trickster',  name:'Trickster',     icon:'🎯', tier:'tier3',   banned:false, map:'Raccoon City P1'},
-  {id:'nemesis',    name:'Nemesis',       icon:'🧠', tier:'tier4',   banned:false, map:'Raccoon City P2'},
-  {id:'pinhead',    name:'Pinhead',       icon:'🧊', tier:'general', banned:false, map:'Gideon Meat Plant — Game Map'},
-  {id:'artist',     name:'Artist',        icon:'🖤', tier:'general', banned:false, map:'Shattered Square'},
-  {id:'onryo',      name:'Onryō',         icon:'📺', tier:'tier4',   banned:false, map:'Raccoon City P1'},
-  {id:'dredge',     name:'Dredge',        icon:'🌑', tier:'tier4',   banned:false, map:"Léry's — Disturbed Ward"},
-  {id:'wesker',     name:'Wesker',        icon:'🧬', tier:'general', banned:false, map:'Raccoon City P2'},
-  {id:'knight',     name:'Knight',        icon:'🛡️', tier:'tier4',   banned:false, map:'Shattered Square'},
-  {id:'skull',      name:'Skull Merchant',icon:'💀', tier:'tier2',   banned:false, map:'Gideon Meat Plant — Game Map'},
-  {id:'sing',       name:'Singularity',   icon:'⚛️', tier:'tier3',   banned:false, map:'Nostromo Wreckage'},
-  {id:'xeno',       name:'Xenomorph',     icon:'👽', tier:'tier4',   banned:false, map:'Nostromo Wreckage'},
-  {id:'chucky',     name:'Chucky',        icon:'🪆', tier:'general', banned:false, map:'Raccoon City P1'},
-  {id:'unknown',    name:'Unknown',       icon:'❓', tier:'tier3',   banned:false, map:'Badham Preschool'},
-  {id:'lich',       name:'Lich',          icon:'💜', tier:'tier3',   banned:false, map:'Forgotten Ruins'},
-  {id:'dracula',    name:'Dracula',       icon:'🦇', tier:'tier4',   banned:false, map:'Château Dimmet'},
+  {id:'trapper',    name:'Trapper',       icon:'🪤', tier:'general', banned:false, map:'Coldwind Farm — Rancid Abbatoir',
+   img:`${W}/5/5a/K01_charSelect_portrait.png`},
+  {id:'wraith',     name:'Wraith',        icon:'🔔', tier:'tier3',   banned:false, map:'MacMillan Estate — Coal Tower I',
+   img:`${W}/0/0d/K02_charSelect_portrait.png`},
+  {id:'hillbilly',  name:'Hillbilly',     icon:'⛏️', tier:'general', banned:false, map:'Backwater Swamp — Grim Pantry',
+   img:`${W}/a/a8/K03_charSelect_portrait.png`},
+  {id:'nurse',      name:'Nurse',         icon:'🏥', tier:'general', banned:true,  map:'— BANIDA —',
+   img:`${W}/5/5e/K04_charSelect_portrait.png`},
+  {id:'shape',      name:'Shape',         icon:'🎭', tier:'general', banned:false, map:'Haddonfield — Lampkin Lane',
+   img:`${W}/2/20/K05_charSelect_portrait.png`},
+  {id:'hag',        name:'Hag',           icon:'🧙', tier:'general', banned:false, map:'Backwater Swamp — Pale Rose',
+   img:`${W}/3/32/K06_charSelect_portrait.png`},
+  {id:'doctor',     name:'Doctor',        icon:'⚡', tier:'tier4',   banned:false, map:"Léry's — Treatment Theatre",
+   img:`${W}/4/4a/K07_charSelect_portrait.png`},
+  {id:'huntress',   name:'Huntress',      icon:'🪓', tier:'general', banned:false, map:"Red Forest — Mother's Dwelling",
+   img:`${W}/c/cb/K08_charSelect_portrait.png`},
+  {id:'leatherface',name:'Leatherface',   icon:'🔪', tier:'tier3',   banned:false, map:'Coldwind Farm — Rancid Abbatoir',
+   img:`${W}/5/5d/K09_charSelect_portrait.png`},
+  {id:'freddy',     name:'Freddy',        icon:'💤', tier:'tier4',   banned:false, map:'Badham Preschool I',
+   img:`${W}/3/3f/K10_charSelect_portrait.png`},
+  {id:'pig',        name:'Pig',           icon:'🐷', tier:'tier4',   banned:false, map:'Gideon Meat Plant — Game Map',
+   img:`${W}/7/74/K11_charSelect_portrait.png`},
+  {id:'clown',      name:'Clown',         icon:'🤡', tier:'tier3',   banned:false, map:'Coldwind Farm — Thompson House',
+   img:`${W}/0/09/K12_charSelect_portrait.png`},
+  {id:'spirit',     name:'Spirit',        icon:'👻', tier:'general', banned:false, map:'Yamaoka — Family Residence',
+   img:`${W}/c/c9/K13_charSelect_portrait.png`},
+  {id:'legion',     name:'Legion',        icon:'🎸', tier:'tier3',   banned:false, map:'Mount Ormond Resort',
+   img:`${W}/d/d7/K14_charSelect_portrait.png`},
+  {id:'plague',     name:'Plague',        icon:'🧟', tier:'tier4',   banned:false, map:'Temple of Purgation',
+   img:`${W}/2/20/K15_charSelect_portrait.png`},
+  {id:'ghostface',  name:'Ghost Face',    icon:'👘', tier:'tier4',   banned:false, map:'Haddonfield — Lampkin Lane',
+   img:`${W}/3/3e/K16_charSelect_portrait.png`},
+  {id:'demo',       name:'Demogorgon',    icon:'🕳️', tier:'tier4',   banned:false, map:'Underground Complex',
+   img:`${W}/2/25/K17_charSelect_portrait.png`},
+  {id:'oni',        name:'Oni',           icon:'🗡️', tier:'tier4',   banned:false, map:'Yamaoka — Sanctum of Wrath',
+   img:`${W}/6/6d/K18_charSelect_portrait.png`},
+  {id:'deathslinger',name:'Deathslinger', icon:'🔫', tier:'tier4',   banned:false, map:'Dead Dawg Saloon',
+   img:`${W}/6/68/K19_charSelect_portrait.png`},
+  {id:'ph',         name:'Pyramid Head',  icon:'🔺', tier:'general', banned:false, map:'Silent Hill — Midwich',
+   img:`${W}/b/b9/K20_charSelect_portrait.png`},
+  {id:'twins',      name:'Twins',         icon:'👥', tier:'tier2',   banned:false, map:'Pale Rose — Swamp',
+   img:`${W}/1/18/K21_charSelect_portrait.png`},
+  {id:'trickster',  name:'Trickster',     icon:'🎯', tier:'tier3',   banned:false, map:'Raccoon City P1',
+   img:`${W}/9/9c/K22_charSelect_portrait.png`},
+  {id:'nemesis',    name:'Nemesis',       icon:'🧠', tier:'tier4',   banned:false, map:'Raccoon City P2',
+   img:`${W}/1/12/K23_charSelect_portrait.png`},
+  {id:'pinhead',    name:'Pinhead',       icon:'🧊', tier:'general', banned:false, map:'Gideon Meat Plant — Game Map',
+   img:`${W}/6/66/K24_charSelect_portrait.png`},
+  {id:'artist',     name:'Artist',        icon:'🖤', tier:'general', banned:false, map:'Shattered Square',
+   img:`${W}/c/c8/K25_charSelect_portrait.png`},
+  {id:'onryo',      name:'Onryō',         icon:'📺', tier:'tier4',   banned:false, map:'Raccoon City P1',
+   img:`${W}/8/8f/K26_charSelect_portrait.png`},
+  {id:'dredge',     name:'Dredge',        icon:'🌑', tier:'tier4',   banned:false, map:"Léry's — Disturbed Ward",
+   img:`${W}/e/e2/K27_charSelect_portrait.png`},
+  {id:'wesker',     name:'Wesker',        icon:'🧬', tier:'general', banned:false, map:'Raccoon City P2',
+   img:`${W}/0/01/K28_charSelect_portrait.png`},
+  {id:'knight',     name:'Knight',        icon:'🛡️', tier:'tier4',   banned:false, map:'Shattered Square',
+   img:`${W}/5/5f/K29_charSelect_portrait.png`},
+  {id:'skull',      name:'Skull Merchant',icon:'💀', tier:'tier2',   banned:false, map:'Gideon Meat Plant — Game Map',
+   img:`${W}/4/4c/K30_charSelect_portrait.png`},
+  {id:'sing',       name:'Singularity',   icon:'⚛️', tier:'tier3',   banned:false, map:'Nostromo Wreckage',
+   img:`${W}/e/ec/K31_charSelect_portrait.png`},
+  {id:'xeno',       name:'Xenomorph',     icon:'👽', tier:'tier4',   banned:false, map:'Nostromo Wreckage',
+   img:`${W}/2/24/K32_charSelect_portrait.png`},
+  {id:'chucky',     name:'Chucky',        icon:'🪆', tier:'general', banned:false, map:'Raccoon City P1',
+   img:`${W}/b/b5/K33_charSelect_portrait.png`},
+  {id:'unknown',    name:'Unknown',       icon:'❓', tier:'tier3',   banned:false, map:'Badham Preschool',
+   img:`${W}/7/7c/K34_charSelect_portrait.png`},
+  {id:'lich',       name:'Lich',          icon:'💜', tier:'tier3',   banned:false, map:'Forgotten Ruins',
+   img:`${W}/9/9a/K35_charSelect_portrait.png`},
+  {id:'dracula',    name:'Dracula',       icon:'🦇', tier:'tier4',   banned:false, map:'Château Dimmet',
+   img:`${W}/3/35/K36_charSelect_portrait.png`},
 ];
 
 const TIER_INFO={
@@ -351,50 +394,112 @@ const TIER_INFO={
   tier1:  {label:'Tier 1', cls:'t1',desc:'Perks fracos. Totalmente liberados — sem restrições.'},
 };
 
+const PW='https://static.wikia.nocookie.net/deadbydaylight/images';
+
 const PERKS={
   killer:[
-    {id:'k_ruin',      name:'Hex: Ruin',              icon:'🕯️',char:'Hag',          tier:'general',banned:true, desc:'Regressão automática em gens não sendo reparados. Banido no General.'},
-    {id:'k_devour',    name:'Hex: Devour Hope',        icon:'🔥',char:'Hag',          tier:'general',banned:true, desc:'Tokens por rescue permitem matar sem gancho. Banido.'},
-    {id:'k_noed',      name:'Hex: NOED',               icon:'💀',char:'General',      tier:'general',banned:true, desc:'Expõe todos survivors quando EGC inicia. Banido.'},
-    {id:'k_painres',   name:'Pain Resonance',          icon:'🎸',char:'Artist',       tier:'general',banned:true, desc:'15% regressão por hook em Scourge Hook. Banido.'},
-    {id:'k_deadlock',  name:'Deadlock',                icon:'🔒',char:'Pinhead',      tier:'general',banned:true, desc:'Bloqueia gen mais avançado após hook. Banido.'},
-    {id:'k_corrupt',   name:'Corrupt Intervention',    icon:'🧟',char:'Plague',       tier:'general',banned:true, desc:'Bloqueia 3 gens por 100s no início. Banido.'},
-    {id:'k_grim',      name:'Grim Embrace',            icon:'🤗',char:'Artist',       tier:'general',banned:true, desc:'Cada hook único bloqueia todos gens por 16s. Banido.'},
-    {id:'k_bbq',       name:'Barbecue & Chili',        icon:'🍖',char:'Leatherface',  tier:'general',banned:false,desc:'Revela auras de survivors a 60m após hook. +25% BP.'},
-    {id:'k_lethal',    name:'Lethal Pursuer',          icon:'🎯',char:'Nemesis',      tier:'general',banned:false,desc:'Revela auras de todos survivors por 9s no início.'},
-    {id:'k_dms',       name:'Dead Man\'s Switch',      icon:'🔌',char:'Deathslinger', tier:'general',banned:false,desc:'Gen fica bloqueado se survivor parar de reparar após hook.'},
-    {id:'k_pop',       name:'Pop Goes The Weasel',     icon:'💥',char:'Clown',        tier:'general',banned:false,desc:'Kick gen após hook: grande regressão de progresso.'},
-    {id:'k_stbfl',     name:'Save The Best For Last',  icon:'⏳',char:'Nurse',        tier:'general',banned:false,desc:'Hits em não-obsessão reduzem cooldown de ataque.'},
-    {id:'k_enduring',  name:'Enduring',                icon:'🔩',char:'Hillbilly',    tier:'general',banned:false,desc:'Reduz stun de pallet em 75%.'},
-    {id:'k_spiritfury',name:'Spirit Fury',             icon:'⚡',char:'Spirit',       tier:'general',banned:false,desc:'Após quebrar 4 pallets, próxima quebra é instantânea.'},
-    {id:'k_undying',   name:'Hex: Undying',            icon:'♾️',char:'Dracula',      tier:'general',banned:false,desc:'Revela survivors perto de totems. Transfere hex ao limpar.'},
-    {id:'k_eruption',  name:'Eruption',                icon:'🌋',char:'Nemesis',      tier:'general',banned:false,desc:'Gen explode e incapacita survivor ao ser derrubado.'},
-    {id:'k_ult',       name:'Ultimate Weapon',         icon:'🗡️',char:'Xenomorph',    tier:'general',banned:false,desc:'Abrir locker: survivors em 32m ficam Cegos por 50s.'},
-    {id:'k_monitor',   name:'Monitor & Abuse',         icon:'📺',char:'Doctor',       tier:'tier4',  banned:false,desc:'TR menor fora de chase, maior dentro de chase.'},
-    {id:'k_bamboozle', name:'Bamboozle',               icon:'🎪',char:'Clown',        tier:'tier4',  banned:false,desc:'Vault 15% mais rápido e bloqueia window por 12s.'},
-    {id:'k_surge',     name:'Surge',                   icon:'💥',char:'Demogorgon',   tier:'tier4',  banned:false,desc:'Injuriar causa regressão em gens próximos.'},
-    {id:'k_overcharge',name:'Overcharge',              icon:'⚡',char:'Doctor',       tier:'tier4',  banned:false,desc:'Kick gen aumenta dificuldade de skill check drasticamente.'},
-    {id:'k_tinkerer',  name:'Tinkerer',                icon:'🔧',char:'Hillbilly',    tier:'tier4',  banned:false,desc:'Gen a 70% concede Undetectable por 16s e Haste.'},
-    {id:'k_knockout',  name:'Knock Out',               icon:'🥊',char:'Leatherface',  tier:'tier4',  banned:false,desc:'Hit oculta aura de survivors no dying state por 25s.'},
-    {id:'k_haunted',   name:'Hex: Haunted Ground',     icon:'👻',char:'Spirit',       tier:'tier4',  banned:false,desc:'Totem cleansado expõe todos survivors por 60s.'},
-    {id:'k_starstruck',name:'Starstruck',              icon:'⭐',char:'Trickster',    tier:'tier4',  banned:false,desc:'Carregar survivor expõe survivors dentro do TR.'},
-    {id:'k_noWayOut',  name:'No Way Out',              icon:'🚫',char:'Trickster',    tier:'tier4',  banned:false,desc:'Hooks únicos adicionam delay para abrir portões no EGC.'},
-    {id:'k_thrilling', name:'Thrilling Tremors',       icon:'🌪️',char:'Ghost Face',   tier:'tier4',  banned:false,desc:'Carregar survivor bloqueia gens não sendo reparados por 16s.'},
-    {id:'k_iears',     name:'I\'m All Ears',           icon:'👂',char:'Ghost Face',   tier:'tier4',  banned:false,desc:'Rushed action revela aura do survivor por 8s.'},
-    {id:'k_discordance',name:'Discordance',            icon:'🎶',char:'Legion',       tier:'tier4',  banned:false,desc:'Revela gens sendo reparados em co-op e emite som.'},
-    {id:'k_surveillance',name:'Surveillance',         icon:'📷',char:'Pig',          tier:'tier4',  banned:false,desc:'Gens regredindo aparecem em branco, completados mostram regressão.'},
-    {id:'k_callbrine', name:'Call Of Brine',           icon:'🌊',char:'Onryō',        tier:'tier4',  banned:false,desc:'Kick gen: regressa 150% e revela aura enquanto regride.'},
-    {id:'k_dissolution',name:'Dissolution',           icon:'💧',char:'Dredge',       tier:'tier4',  banned:false,desc:'Rushed vault em chase bloqueia o pallet/window.'},
-    {id:'k_myc',       name:'Make Your Choice',        icon:'☠️',char:'Pig',          tier:'tier4',  banned:false,desc:'Rescue a 32m+: survivor fica Exposed por 60s.'},
-    {id:'k_hubris',    name:'Hubris',                  icon:'👑',char:'Knight',       tier:'tier4',  banned:false,desc:'Ser stunado por pallet concede Exposed naquele survivor.'},
-    {id:'k_nowhere',   name:'Nowhere To Hide',         icon:'🚷',char:'Knight',       tier:'tier4',  banned:false,desc:'Kick gen revela auras de survivors em 24m por 5s.'},
-    {id:'k_oppression',name:'Oppression',              icon:'😤',char:'Twins',        tier:'tier4',  banned:false,desc:'Kick gen faz 2 outros gens aleatórios explodirem.'},
-    {id:'k_gearhead',  name:'Gearhead',                icon:'⚙️',char:'Deathslinger', tier:'tier4',  banned:false,desc:'Após perda de estado, revela gens sendo reparados por 20s.'},
-    {id:'k_rancor',    name:'Rancor',                  icon:'😡',char:'Spirit',       tier:'tier4',  banned:false,desc:'Gens completados revelam auras. Obsessão exposta no EGC.'},
-    {id:'k_sloppy',    name:'Sloppy Butcher',          icon:'🩸',char:'General',      tier:'tier3',  banned:false,desc:'Ataques básicos aplicam Mangled e Hemorrhage.'},
-    {id:'k_deerstalker',name:'Deerstalker',            icon:'🦌',char:'General',      tier:'tier3',  banned:false,desc:'Revela aura de survivors no dying state dentro de 40m.'},
-    {id:'k_whispers',  name:'Whispers',                icon:'💬',char:'General',      tier:'tier3',  banned:false,desc:'Som de sussurro quando survivor está dentro de 32m.'},
-    {id:'k_coulro',    name:'Coulrophobia',            icon:'🤡',char:'Clown',        tier:'tier3',  banned:false,desc:'Survivors dentro do TR heal 100% mais lento.'},
+    {id:'k_ruin',      name:'Hex: Ruin',              icon:'🕯️',char:'Hag',          tier:'general',banned:true, desc:'Regressão automática em gens não sendo reparados. Banido no General.',
+     img:`${PW}/2/26/Hex_Ruin_iconPerks.png`},
+    {id:'k_devour',    name:'Hex: Devour Hope',        icon:'🔥',char:'Hag',          tier:'general',banned:true, desc:'Tokens por rescue permitem matar sem gancho. Banido.',
+     img:`${PW}/c/c4/Hex_Devour_Hope_iconPerks.png`},
+    {id:'k_noed',      name:'Hex: NOED',               icon:'💀',char:'General',      tier:'general',banned:true, desc:'Expõe todos survivors quando EGC inicia. Banido.',
+     img:`${PW}/3/35/Hex_No_One_Escapes_Death_iconPerks.png`},
+    {id:'k_painres',   name:'Pain Resonance',          icon:'🎸',char:'Artist',       tier:'general',banned:true, desc:'15% regressão por hook em Scourge Hook. Banido.',
+     img:`${PW}/e/e0/Pain_Resonance_iconPerks.png`},
+    {id:'k_deadlock',  name:'Deadlock',                icon:'🔒',char:'Pinhead',      tier:'general',banned:true, desc:'Bloqueia gen mais avançado após hook. Banido.',
+     img:`${PW}/4/4d/Deadlock_iconPerks.png`},
+    {id:'k_corrupt',   name:'Corrupt Intervention',    icon:'🧟',char:'Plague',       tier:'general',banned:true, desc:'Bloqueia 3 gens por 100s no início. Banido.',
+     img:`${PW}/c/c4/Corrupt_Intervention_iconPerks.png`},
+    {id:'k_grim',      name:'Grim Embrace',            icon:'🤗',char:'Artist',       tier:'general',banned:true, desc:'Cada hook único bloqueia todos gens por 16s. Banido.',
+     img:`${PW}/2/29/Grim_Embrace_iconPerks.png`},
+    {id:'k_bbq',       name:'Barbecue & Chili',        icon:'🍖',char:'Leatherface',  tier:'general',banned:false,desc:'Revela auras de survivors a 60m após hook. +25% BP.',
+     img:`${PW}/9/97/Barbecue_%26_Chili_iconPerks.png`},
+    {id:'k_lethal',    name:'Lethal Pursuer',          icon:'🎯',char:'Nemesis',      tier:'general',banned:false,desc:'Revela auras de todos survivors por 9s no início.',
+     img:`${PW}/f/f4/Lethal_Pursuer_iconPerks.png`},
+    {id:'k_dms',       name:'Dead Man\'s Switch',      icon:'🔌',char:'Deathslinger', tier:'general',banned:false,desc:'Gen fica bloqueado se survivor parar de reparar após hook.',
+     img:`${PW}/3/3e/Dead_Man%27s_Switch_iconPerks.png`},
+    {id:'k_pop',       name:'Pop Goes The Weasel',     icon:'💥',char:'Clown',        tier:'general',banned:false,desc:'Kick gen após hook: grande regressão de progresso.',
+     img:`${PW}/8/8a/Pop_Goes_the_Weasel_iconPerks.png`},
+    {id:'k_stbfl',     name:'Save The Best For Last',  icon:'⏳',char:'Nurse',        tier:'general',banned:false,desc:'Hits em não-obsessão reduzem cooldown de ataque.',
+     img:`${PW}/f/f5/Save_the_Best_for_Last_iconPerks.png`},
+    {id:'k_enduring',  name:'Enduring',                icon:'🔩',char:'Hillbilly',    tier:'general',banned:false,desc:'Reduz stun de pallet em 75%.',
+     img:`${PW}/9/91/Enduring_iconPerks.png`},
+    {id:'k_spiritfury',name:'Spirit Fury',             icon:'⚡',char:'Spirit',       tier:'general',banned:false,desc:'Após quebrar 4 pallets, próxima quebra é instantânea.',
+     img:`${PW}/3/30/Spirit_Fury_iconPerks.png`},
+    {id:'k_undying',   name:'Hex: Undying',            icon:'♾️',char:'Dracula',      tier:'general',banned:false,desc:'Revela survivors perto de totems. Transfere hex ao limpar.',
+     img:`${PW}/9/9d/Hex_Undying_iconPerks.png`},
+    {id:'k_eruption',  name:'Eruption',                icon:'🌋',char:'Nemesis',      tier:'general',banned:false,desc:'Gen explode e incapacita survivor ao ser derrubado.',
+     img:`${PW}/5/52/Eruption_iconPerks.png`},
+    {id:'k_ult',       name:'Ultimate Weapon',         icon:'🗡️',char:'Xenomorph',    tier:'general',banned:false,desc:'Abrir locker: survivors em 32m ficam Cegos por 50s.',
+     img:`${PW}/c/c2/Ultimate_Weapon_iconPerks.png`},
+    {id:'k_monitor',   name:'Monitor & Abuse',         icon:'📺',char:'Doctor',       tier:'tier4',  banned:false,desc:'TR menor fora de chase, maior dentro de chase.',
+     img:`${PW}/3/3c/Monitor_%26_Abuse_iconPerks.png`},
+    {id:'k_bamboozle', name:'Bamboozle',               icon:'🎪',char:'Clown',        tier:'tier4',  banned:false,desc:'Vault 15% mais rápido e bloqueia window por 12s.',
+     img:`${PW}/0/06/Bamboozle_iconPerks.png`},
+    {id:'k_surge',     name:'Surge',                   icon:'💥',char:'Demogorgon',   tier:'tier4',  banned:false,desc:'Injuriar causa regressão em gens próximos.',
+     img:`${PW}/c/c6/Surge_iconPerks.png`},
+    {id:'k_overcharge',name:'Overcharge',              icon:'⚡',char:'Doctor',       tier:'tier4',  banned:false,desc:'Kick gen aumenta dificuldade de skill check drasticamente.',
+     img:`${PW}/c/c1/Overcharge_iconPerks.png`},
+    {id:'k_tinkerer',  name:'Tinkerer',                icon:'🔧',char:'Hillbilly',    tier:'tier4',  banned:false,desc:'Gen a 70% concede Undetectable por 16s e Haste.',
+     img:`${PW}/3/35/Tinkerer_iconPerks.png`},
+    {id:'k_knockout',  name:'Knock Out',               icon:'🥊',char:'Leatherface',  tier:'tier4',  banned:false,desc:'Hit oculta aura de survivors no dying state por 25s.',
+     img:`${PW}/5/5b/Knock_Out_iconPerks.png`},
+    {id:'k_haunted',   name:'Hex: Haunted Ground',     icon:'👻',char:'Spirit',       tier:'tier4',  banned:false,desc:'Totem cleansado expõe todos survivors por 60s.',
+     img:`${PW}/4/4e/Hex_Haunted_Ground_iconPerks.png`},
+    {id:'k_starstruck',name:'Starstruck',              icon:'⭐',char:'Trickster',    tier:'tier4',  banned:false,desc:'Carregar survivor expõe survivors dentro do TR.',
+     img:`${PW}/9/9f/Starstruck_iconPerks.png`},
+    {id:'k_noWayOut',  name:'No Way Out',              icon:'🚫',char:'Trickster',    tier:'tier4',  banned:false,desc:'Hooks únicos adicionam delay para abrir portões no EGC.',
+     img:`${PW}/7/7d/No_Way_Out_iconPerks.png`},
+    {id:'k_thrilling', name:'Thrilling Tremors',       icon:'🌪️',char:'Ghost Face',   tier:'tier4',  banned:false,desc:'Carregar survivor bloqueia gens não sendo reparados por 16s.',
+     img:`${PW}/5/55/Thrilling_Tremors_iconPerks.png`},
+    {id:'k_iears',     name:'I\'m All Ears',           icon:'👂',char:'Ghost Face',   tier:'tier4',  banned:false,desc:'Rushed action revela aura do survivor por 8s.',
+     img:`${PW}/1/17/I%27m_All_Ears_iconPerks.png`},
+    {id:'k_discordance',name:'Discordance',            icon:'🎶',char:'Legion',       tier:'tier4',  banned:false,desc:'Revela gens sendo reparados em co-op e emite som.',
+     img:`${PW}/2/29/Discordance_iconPerks.png`},
+    {id:'k_surveillance',name:'Surveillance',         icon:'📷',char:'Pig',          tier:'tier4',  banned:false,desc:'Gens regredindo aparecem em branco, completados mostram regressão.',
+     img:`${PW}/2/29/Surveillance_iconPerks.png`},
+    {id:'k_callbrine', name:'Call Of Brine',           icon:'🌊',char:'Onryō',        tier:'tier4',  banned:false,desc:'Kick gen: regressa 150% e revela aura enquanto regride.',
+     img:`${PW}/5/5d/Call_of_Brine_iconPerks.png`},
+    {id:'k_dissolution',name:'Dissolution',           icon:'💧',char:'Dredge',       tier:'tier4',  banned:false,desc:'Rushed vault em chase bloqueia o pallet/window.',
+     img:`${PW}/4/4e/Dissolution_iconPerks.png`},
+    {id:'k_myc',       name:'Make Your Choice',        icon:'☠️',char:'Pig',          tier:'tier4',  banned:false,desc:'Rescue a 32m+: survivor fica Exposed por 60s.',
+     img:`${PW}/2/2c/Make_Your_Choice_iconPerks.png`},
+    {id:'k_hubris',    name:'Hubris',                  icon:'👑',char:'Knight',       tier:'tier4',  banned:false,desc:'Ser stunado por pallet concede Exposed naquele survivor.',
+     img:`${PW}/e/e7/Hubris_iconPerks.png`},
+    {id:'k_nowhere',   name:'Nowhere To Hide',         icon:'🚷',char:'Knight',       tier:'tier4',  banned:false,desc:'Kick gen revela auras de survivors em 24m por 5s.',
+     img:`${PW}/c/c3/Nowhere_to_Hide_iconPerks.png`},
+    {id:'k_oppression',name:'Oppression',              icon:'😤',char:'Twins',        tier:'tier4',  banned:false,desc:'Kick gen faz 2 outros gens aleatórios explodirem.',
+     img:`${PW}/e/ec/Oppression_iconPerks.png`},
+    {id:'k_gearhead',  name:'Gearhead',                icon:'⚙️',char:'Deathslinger', tier:'tier4',  banned:false,desc:'Após perda de estado, revela gens sendo reparados por 20s.',
+     img:`${PW}/2/25/Gearhead_iconPerks.png`},
+    {id:'k_rancor',    name:'Rancor',                  icon:'😡',char:'Spirit',       tier:'tier4',  banned:false,desc:'Gens completados revelam auras. Obsessão exposta no EGC.',
+     img:`${PW}/5/5b/Rancor_iconPerks.png`},
+    {id:'k_sloppy',    name:'Sloppy Butcher',          icon:'🩸',char:'General',      tier:'tier3',  banned:false,desc:'Ataques básicos aplicam Mangled e Hemorrhage.',
+     img:`${PW}/b/b0/Sloppy_Butcher_iconPerks.png`},
+    {id:'k_deerstalker',name:'Deerstalker',            icon:'🦌',char:'General',      tier:'tier3',  banned:false,desc:'Revela aura de survivors no dying state dentro de 40m.',
+     img:`${PW}/9/9d/Deerstalker_iconPerks.png`},
+    {id:'k_whispers',  name:'Whispers',                icon:'💬',char:'General',      tier:'tier3',  banned:false,desc:'Som de sussurro quando survivor está dentro de 32m.',
+     img:`${PW}/d/db/Whispers_iconPerks.png`},
+    {id:'k_coulro',    name:'Coulrophobia',            icon:'🤡',char:'Clown',        tier:'tier3',  banned:false,desc:'Survivors dentro do TR heal 100% mais lento.',
+     img:`${PW}/3/30/Coulrophobia_iconPerks.png`},
+    {id:'k_bitter',    name:'Bitter Murmur',           icon:'👁️',char:'General',      tier:'tier3',  banned:false,desc:'Revela auras de survivors 5s após cada gen ser completado.',
+     img:`${PW}/7/74/Bitter_Murmur_iconPerks.png`},
+    {id:'k_franklins', name:"Franklin's Demise",       icon:'🎒',char:'Leatherface',  tier:'tier3',  banned:false,desc:'Hit faz survivor dropar e danifica item.',
+     img:`${PW}/f/f4/Franklin%27s_Demise_iconPerks.png`},
+    {id:'k_agitation',name:'Agitation',               icon:'😤',char:'Trapper',      tier:'tier3',  banned:false,desc:'+18% velocidade ao carregar survivor. TR +8m ao carregar.',
+     img:`${PW}/a/a0/Agitation_iconPerks.png`},
+    {id:'k_ironmaiden',name:'Iron Maiden',             icon:'⛓️',char:'Legion',       tier:'tier3',  banned:false,desc:'Abrir locker mais rápido. Sair do locker: Exposed por 20s.',
+     img:`${PW}/3/3f/Iron_Maiden_iconPerks.png`},
+    {id:'k_bloodecho', name:'Blood Echo',              icon:'🩸',char:'Oni',          tier:'tier3',  banned:false,desc:'Hook: survivors feridos ficam Exaustos e com Hemorrhage.',
+     img:`${PW}/8/8c/Blood_Echo_iconPerks.png`},
+    {id:'k_zanshin',   name:'Zanshin Tactics',         icon:'🗡️',char:'Oni',          tier:'tier2',  banned:false,desc:'Em chase: auras de janelas e pallets reveladas.',
+     img:`${PW}/8/80/Zanshin_Tactics_iconPerks.png`},
+    {id:'k_predator',  name:'Predator',                icon:'🦅',char:'Wraith',       tier:'tier2',  banned:false,desc:'Scratch marks ficam mais próximos — tracking mais fácil.',
+     img:`${PW}/7/74/Predator_iconPerks.png`},
+    {id:'k_territorial',name:'Territorial Imperative', icon:'🗺️',char:'Huntress',     tier:'tier1',  banned:false,desc:'Revela aura de survivors que entram no porão quando próximo.',
+     img:`${PW}/7/72/Territorial_Imperative_iconPerks.png`},
+  ],
+  survivor:[
     {id:'k_ironmaiden',name:'Iron Maiden',             icon:'⛓️',char:'Legion',       tier:'tier3',  banned:false,desc:'Abrir locker mais rápido. Sair do locker: Exposed por 20s.'},
     {id:'k_bloodecho', name:'Blood Echo',              icon:'🩸',char:'Oni',          tier:'tier3',  banned:false,desc:'Hook: survivors feridos ficam Exaustos e com Hemorrhage.'},
     {id:'k_zanshin',   name:'Zanshin Tactics',         icon:'🗡️',char:'Oni',          tier:'tier2',  banned:false,desc:'Em chase: auras de janelas e pallets reveladas.'},
@@ -402,47 +507,88 @@ const PERKS={
     {id:'k_territorial',name:'Territorial Imperative', icon:'🗺️',char:'Huntress',     tier:'tier1',  banned:false,desc:'Revela aura de survivors que entram no porão quando próximo.'},
   ],
   survivor:[
-    {id:'s_ds',      name:'Decisive Strike',        icon:'🗡️',char:'Laurie',   tier:'general',banned:true, desc:'Escape do grasp após unhook por 40-60s. Banido.'},
-    {id:'s_otr',     name:'Off The Record',         icon:'📵',char:'General',  tier:'general',banned:true, desc:'Endurance + aura bloqueada após unhook por 80s. Banido.'},
-    {id:'s_borrowed',name:'Borrowed Time',          icon:'⏰',char:'Bill',     tier:'general',banned:true, desc:'Endurance ao fazer unhook dentro do TR. Banido.'},
-    {id:'s_unbreak', name:'Unbreakable',            icon:'💎',char:'Bill',     tier:'general',banned:true, desc:'Recupera do dying state uma vez por trial. Banido.'},
-    {id:'s_dh',      name:'Dead Hard',              icon:'💨',char:'David',    tier:'general',banned:true, desc:'Dash invencível quando ferido. Banido.'},
-    {id:'s_coh',     name:'Boon: Circle Of Healing',icon:'⭕',char:'General',  tier:'general',banned:true, desc:'Heal sem med-kit no range do boon. Banido.'},
-    {id:'s_sb',      name:'Sprint Burst',           icon:'💨',char:'Meg',      tier:'general',banned:true, desc:'150% velocidade ao começar a correr. Banido.'},
-    {id:'s_distort', name:'Distortion',             icon:'🌀',char:'Jeff',     tier:'general',banned:false,desc:'Tokens bloqueiam leitura de aura. Recarga no TR do killer.'},
-    {id:'s_kindred', name:'Kindred',                icon:'👨‍👩‍👧',char:'General',  tier:'general',banned:false,desc:'Revela auras de survivors e killer ao redor do hook.'},
-    {id:'s_adren',   name:'Adrenaline',             icon:'💉',char:'Meg',      tier:'general',banned:false,desc:'Último gen: heal instantâneo + Haste por 5s.'},
-    {id:'s_windows', name:'Windows Of Opportunity', icon:'🪟',char:'Kate',     tier:'general',banned:false,desc:'Auras de pallets, janelas e paredes reveladas em 28m.'},
-    {id:'s_lithe',   name:'Lithe',                  icon:'🤸',char:'Feng',     tier:'general',banned:false,desc:'150% por 3s após rushed vault. Causa Exaustão.'},
-    {id:'s_balanced',name:'Balanced Landing',       icon:'🤸',char:'Nea',      tier:'general',banned:false,desc:'Sem stagger ao cair + Haste 150% por 3s. Exaustão.'},
-    {id:'s_prove',   name:'Prove Thyself',          icon:'🤜',char:'Dwight',   tier:'general',banned:false,desc:'+15% reparo por survivor em 4m. +50% BP ações coop.'},
-    {id:'s_ironwill',name:'Iron Will',              icon:'💪',char:'Jake',     tier:'general',banned:false,desc:'Sons de dor suprimidos 100% quando ferido.'},
-    {id:'s_made',    name:'Made For This',          icon:'🦾',char:'Gabriel',  tier:'general',banned:false,desc:'+1% Haste quando ferido. Endurance após unhook.'},
-    {id:'s_dramaturgy',name:'Dramaturgy',           icon:'🎭',char:'Nicolas Cage',tier:'general',banned:false,desc:'150% por 3s + efeito aleatório positivo. Exaustão.'},
-    {id:'s_weave',   name:'Weave Attunement',       icon:'🕸️',char:'Sable',    tier:'general',banned:false,desc:'Killer pega/larga item → revela aura do killer e esconde a sua.'},
-    {id:'s_lucky',   name:'Lucky Break',            icon:'🍀',char:'Ripley',   tier:'general',banned:false,desc:'Sem rastros de sangue/scratch marks por 120s total.'},
-    {id:'s_headon',  name:'Head On',                icon:'🤜',char:'Jeff',     tier:'tier4',  banned:false,desc:'3s no locker: stunna killer ao abrir. Exaustão por 20s.'},
-    {id:'s_overcome',name:'Overcome',               icon:'🏃',char:'Gabriel',  tier:'tier4',  banned:false,desc:'150% por 4s ao perder estado de saúde. Exaustão.'},
-    {id:'s_smash',   name:'Smash Hit',              icon:'💥',char:'Thalita',  tier:'tier4',  banned:false,desc:'Stun killer com pallet → 150% por 4s. Exaustão.'},
-    {id:'s_resilience',name:'Resilience',           icon:'💪',char:'General',  tier:'tier4',  banned:false,desc:'+9% velocidade de ações quando ferido. Vault +9%.'},
-    {id:'s_inner',   name:'Inner Strength',         icon:'🏋️',char:'Nancy',    tier:'tier4',  banned:false,desc:'Limpar totem: heal em locker em 8s sem med-kit.'},
-    {id:'s_fogwise', name:'Fogwise',                icon:'🌫️',char:'Vittorio', tier:'tier4',  banned:false,desc:'Great Skill Check revela aura do killer por 6s.'},
-    {id:'s_bond',    name:'Bond',                   icon:'🔗',char:'Dwight',   tier:'tier3',  banned:false,desc:'Revela auras de todos survivors dentro de 36m.'},
-    {id:'s_empathy', name:'Empathy',                icon:'❤️',char:'Claudette',tier:'tier3',  banned:false,desc:'Revela auras de survivors feridos em até 128m.'},
-    {id:'s_alert',   name:'Alert',                  icon:'🔔',char:'Feng',     tier:'tier3',  banned:false,desc:'Loud action killer em 32m: revela aura do killer por 3s.'},
-    {id:'s_urban',   name:'Urban Evasion',          icon:'🏙️',char:'Nea',      tier:'tier3',  banned:false,desc:'+100% velocidade enquanto agachado.'},
-    {id:'s_dance',   name:'Dance With Me',          icon:'💃',char:'Kate',     tier:'tier3',  banned:false,desc:'Após rushed vault/agachamento: sem scratch marks por 3s.'},
-    {id:'s_innerf',  name:'Inner Focus',            icon:'🔵',char:'Haddie',   tier:'tier3',  banned:false,desc:'Ver scratch marks de teammates. Killer revelado ao perder estado.'},
-    {id:'s_overzeal',name:'Overzealous',            icon:'⚡',char:'Haddie',   tier:'tier3',  banned:false,desc:'Cleanse totem: +14% velocidade de reparo pelo resto do trial.'},
-    {id:'s_quickg',  name:'Quick Gambit',           icon:'♟️',char:'Vittorio', tier:'tier3',  banned:false,desc:'Em chase próxima: +10% reparo para survivors em gens em 32m.'},
-    {id:'s_friendly',name:'Friendly Competition',   icon:'🏅',char:'Thalita',  tier:'tier3',  banned:false,desc:'Completar gen com alguém: +25% reparo por 45s.'},
-    {id:'s_saboteur',name:'Saboteur',               icon:'🔨',char:'Jake',     tier:'tier3',  banned:false,desc:'Sabota ganchos sem toolbox. Ganchos levam 70s para respawnar.'},
-    {id:'s_selfcare',name:'Self Care',              icon:'🩺',char:'Claudette',tier:'tier2',  banned:false,desc:'Heal sem med-kit a 50% da velocidade normal.'},
-    {id:'s_botany',  name:'Botany Knowledge',       icon:'🌿',char:'Claudette',tier:'tier2',  banned:false,desc:'+33% heal speed, -33% consumo de item de cura.'},
-    {id:'s_vigil',   name:'Vigil',                  icon:'🔭',char:'Quentin',  tier:'tier2',  banned:false,desc:'Recupera de estados negativos (Exaustão, etc.) 30% mais rápido.'},
-    {id:'s_smallg',  name:'Small Game',             icon:'🐾',char:'General',  tier:'tier1',  banned:false,desc:'Alerta ao olhar para armadilha ou totem a menos de 8m.'},
-    {id:'s_openhand',name:'Open Handed',            icon:'✋',char:'Ace',      tier:'tier1',  banned:false,desc:'+12m para todas as leituras de aura de todos os survivors.'},
-    {id:'s_plunder', name:"Plunderer's Instinct",   icon:'💰',char:'General',  tier:'tier1',  banned:false,desc:'Revela chests e itens no chão em até 64m.'},
+    {id:'s_ds',      name:'Decisive Strike',        icon:'🗡️',char:'Laurie',   tier:'general',banned:true, desc:'Escape do grasp após unhook por 40-60s. Banido.',
+     img:`${PW}/4/49/Decisive_Strike_iconPerks.png`},
+    {id:'s_otr',     name:'Off The Record',         icon:'📵',char:'General',  tier:'general',banned:true, desc:'Endurance + aura bloqueada após unhook por 80s. Banido.',
+     img:`${PW}/3/39/Off_the_Record_iconPerks.png`},
+    {id:'s_borrowed',name:'Borrowed Time',          icon:'⏰',char:'Bill',     tier:'general',banned:true, desc:'Endurance ao fazer unhook dentro do TR. Banido.',
+     img:`${PW}/0/0f/Borrowed_Time_iconPerks.png`},
+    {id:'s_unbreak', name:'Unbreakable',            icon:'💎',char:'Bill',     tier:'general',banned:true, desc:'Recupera do dying state uma vez por trial. Banido.',
+     img:`${PW}/6/6f/Unbreakable_iconPerks.png`},
+    {id:'s_dh',      name:'Dead Hard',              icon:'💨',char:'David',    tier:'general',banned:true, desc:'Dash invencível quando ferido. Banido.',
+     img:`${PW}/c/c0/Dead_Hard_iconPerks.png`},
+    {id:'s_coh',     name:'Boon: Circle Of Healing',icon:'⭕',char:'General',  tier:'general',banned:true, desc:'Heal sem med-kit no range do boon. Banido.',
+     img:`${PW}/e/e9/Boon_Circle_of_Healing_iconPerks.png`},
+    {id:'s_sb',      name:'Sprint Burst',           icon:'💨',char:'Meg',      tier:'general',banned:true, desc:'150% velocidade ao começar a correr. Banido.',
+     img:`${PW}/5/52/Sprint_Burst_iconPerks.png`},
+    {id:'s_distort', name:'Distortion',             icon:'🌀',char:'Jeff',     tier:'general',banned:false,desc:'Tokens bloqueiam leitura de aura. Recarga no TR do killer.',
+     img:`${PW}/d/d8/Distortion_iconPerks.png`},
+    {id:'s_kindred', name:'Kindred',                icon:'👨‍👩‍👧',char:'General',  tier:'general',banned:false,desc:'Revela auras de survivors e killer ao redor do hook.',
+     img:`${PW}/2/29/Kindred_iconPerks.png`},
+    {id:'s_adren',   name:'Adrenaline',             icon:'💉',char:'Meg',      tier:'general',banned:false,desc:'Último gen: heal instantâneo + Haste por 5s.',
+     img:`${PW}/e/ef/Adrenaline_iconPerks.png`},
+    {id:'s_windows', name:'Windows Of Opportunity', icon:'🪟',char:'Kate',     tier:'general',banned:false,desc:'Auras de pallets, janelas e paredes reveladas em 28m.',
+     img:`${PW}/a/ab/Windows_of_Opportunity_iconPerks.png`},
+    {id:'s_lithe',   name:'Lithe',                  icon:'🤸',char:'Feng',     tier:'general',banned:false,desc:'150% por 3s após rushed vault. Causa Exaustão.',
+     img:`${PW}/1/14/Lithe_iconPerks.png`},
+    {id:'s_balanced',name:'Balanced Landing',       icon:'🤸',char:'Nea',      tier:'general',banned:false,desc:'Sem stagger ao cair + Haste 150% por 3s. Exaustão.',
+     img:`${PW}/5/52/Balanced_Landing_iconPerks.png`},
+    {id:'s_prove',   name:'Prove Thyself',          icon:'🤜',char:'Dwight',   tier:'general',banned:false,desc:'+15% reparo por survivor em 4m. +50% BP ações coop.',
+     img:`${PW}/9/9b/Prove_Thyself_iconPerks.png`},
+    {id:'s_ironwill',name:'Iron Will',              icon:'💪',char:'Jake',     tier:'general',banned:false,desc:'Sons de dor suprimidos 100% quando ferido.',
+     img:`${PW}/6/68/Iron_Will_iconPerks.png`},
+    {id:'s_made',    name:'Made For This',          icon:'🦾',char:'Gabriel',  tier:'general',banned:false,desc:'+1% Haste quando ferido. Endurance após unhook.',
+     img:`${PW}/e/eb/Made_for_This_iconPerks.png`},
+    {id:'s_dramaturgy',name:'Dramaturgy',           icon:'🎭',char:'Nicolas Cage',tier:'general',banned:false,desc:'150% por 3s + efeito aleatório positivo. Exaustão.',
+     img:`${PW}/4/48/Dramaturgy_iconPerks.png`},
+    {id:'s_weave',   name:'Weave Attunement',       icon:'🕸️',char:'Sable',    tier:'general',banned:false,desc:'Killer pega/larga item → revela aura do killer e esconde a sua.',
+     img:`${PW}/d/d9/Weave_Attunement_iconPerks.png`},
+    {id:'s_lucky',   name:'Lucky Break',            icon:'🍀',char:'Ripley',   tier:'general',banned:false,desc:'Sem rastros de sangue/scratch marks por 120s total.',
+     img:`${PW}/3/35/Lucky_Break_iconPerks.png`},
+    {id:'s_headon',  name:'Head On',                icon:'🤜',char:'Jeff',     tier:'tier4',  banned:false,desc:'3s no locker: stunna killer ao abrir. Exaustão por 20s.',
+     img:`${PW}/1/10/Head_On_iconPerks.png`},
+    {id:'s_overcome',name:'Overcome',               icon:'🏃',char:'Gabriel',  tier:'tier4',  banned:false,desc:'150% por 4s ao perder estado de saúde. Exaustão.',
+     img:`${PW}/e/e0/Overcome_iconPerks.png`},
+    {id:'s_smash',   name:'Smash Hit',              icon:'💥',char:'Thalita',  tier:'tier4',  banned:false,desc:'Stun killer com pallet → 150% por 4s. Exaustão.',
+     img:`${PW}/1/1f/Smash_Hit_iconPerks.png`},
+    {id:'s_resilience',name:'Resilience',           icon:'💪',char:'General',  tier:'tier4',  banned:false,desc:'+9% velocidade de ações quando ferido. Vault +9%.',
+     img:`${PW}/a/a2/Resilience_iconPerks.png`},
+    {id:'s_inner',   name:'Inner Strength',         icon:'🏋️',char:'Nancy',    tier:'tier4',  banned:false,desc:'Limpar totem: heal em locker em 8s sem med-kit.',
+     img:`${PW}/c/c4/Inner_Strength_iconPerks.png`},
+    {id:'s_fogwise', name:'Fogwise',                icon:'🌫️',char:'Vittorio', tier:'tier4',  banned:false,desc:'Great Skill Check revela aura do killer por 6s.',
+     img:`${PW}/5/59/Fogwise_iconPerks.png`},
+    {id:'s_bond',    name:'Bond',                   icon:'🔗',char:'Dwight',   tier:'tier3',  banned:false,desc:'Revela auras de todos survivors dentro de 36m.',
+     img:`${PW}/0/04/Bond_iconPerks.png`},
+    {id:'s_empathy', name:'Empathy',                icon:'❤️',char:'Claudette',tier:'tier3',  banned:false,desc:'Revela auras de survivors feridos em até 128m.',
+     img:`${PW}/f/f5/Empathy_iconPerks.png`},
+    {id:'s_alert',   name:'Alert',                  icon:'🔔',char:'Feng',     tier:'tier3',  banned:false,desc:'Loud action killer em 32m: revela aura do killer por 3s.',
+     img:`${PW}/e/e6/Alert_iconPerks.png`},
+    {id:'s_urban',   name:'Urban Evasion',          icon:'🏙️',char:'Nea',      tier:'tier3',  banned:false,desc:'+100% velocidade enquanto agachado.',
+     img:`${PW}/5/58/Urban_Evasion_iconPerks.png`},
+    {id:'s_dance',   name:'Dance With Me',          icon:'💃',char:'Kate',     tier:'tier3',  banned:false,desc:'Após rushed vault/agachamento: sem scratch marks por 3s.',
+     img:`${PW}/b/b5/Dance_with_Me_iconPerks.png`},
+    {id:'s_innerf',  name:'Inner Focus',            icon:'🔵',char:'Haddie',   tier:'tier3',  banned:false,desc:'Ver scratch marks de teammates. Killer revelado ao perder estado.',
+     img:`${PW}/7/78/Inner_Focus_iconPerks.png`},
+    {id:'s_overzeal',name:'Overzealous',            icon:'⚡',char:'Haddie',   tier:'tier3',  banned:false,desc:'Cleanse totem: +14% velocidade de reparo pelo resto do trial.',
+     img:`${PW}/5/50/Overzealous_iconPerks.png`},
+    {id:'s_quickg',  name:'Quick Gambit',           icon:'♟️',char:'Vittorio', tier:'tier3',  banned:false,desc:'Em chase próxima: +10% reparo para survivors em gens em 32m.',
+     img:`${PW}/9/9b/Quick_Gambit_iconPerks.png`},
+    {id:'s_friendly',name:'Friendly Competition',   icon:'🏅',char:'Thalita',  tier:'tier3',  banned:false,desc:'Completar gen com alguém: +25% reparo por 45s.',
+     img:`${PW}/0/03/Friendly_Competition_iconPerks.png`},
+    {id:'s_saboteur',name:'Saboteur',               icon:'🔨',char:'Jake',     tier:'tier3',  banned:false,desc:'Sabota ganchos sem toolbox. Ganchos levam 70s para respawnar.',
+     img:`${PW}/e/ef/Saboteur_iconPerks.png`},
+    {id:'s_selfcare',name:'Self Care',              icon:'🩺',char:'Claudette',tier:'tier2',  banned:false,desc:'Heal sem med-kit a 50% da velocidade normal.',
+     img:`${PW}/f/f3/Self_Care_iconPerks.png`},
+    {id:'s_botany',  name:'Botany Knowledge',       icon:'🌿',char:'Claudette',tier:'tier2',  banned:false,desc:'+33% heal speed, -33% consumo de item de cura.',
+     img:`${PW}/c/c9/Botany_Knowledge_iconPerks.png`},
+    {id:'s_vigil',   name:'Vigil',                  icon:'🔭',char:'Quentin',  tier:'tier2',  banned:false,desc:'Recupera de estados negativos (Exaustão, etc.) 30% mais rápido.',
+     img:`${PW}/e/e8/Vigil_iconPerks.png`},
+    {id:'s_smallg',  name:'Small Game',             icon:'🐾',char:'General',  tier:'tier1',  banned:false,desc:'Alerta ao olhar para armadilha ou totem a menos de 8m.',
+     img:`${PW}/1/1d/Small_Game_iconPerks.png`},
+    {id:'s_openhand',name:'Open Handed',            icon:'✋',char:'Ace',      tier:'tier1',  banned:false,desc:'+12m para todas as leituras de aura de todos os survivors.',
+     img:`${PW}/9/9d/Open_Handed_iconPerks.png`},
+    {id:'s_plunder', name:"Plunderer's Instinct",   icon:'💰',char:'General',  tier:'tier1',  banned:false,desc:'Revela chests e itens no chão em até 64m.',
+     img:`${PW}/0/05/Plunderer%27s_Instinct_iconPerks.png`},
   ]
 };
 
@@ -504,7 +650,10 @@ function renderKillers(f=''){
   document.getElementById('killerGrid').innerHTML=list.map(k=>`
     <div class="kcard ${k.banned?'ban':''} ${selKiller?.id===k.id?'sel':''}"
          onclick="${k.banned?"toast('⛔ Killer BANIDO: "+k.name+"')":'selK("'+k.id+'")'}">
-      <div class="ke">${k.icon}</div>
+      ${k.img
+        ?`<img class="kimg" src="${k.img}" alt="${k.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+        :''}
+      <div class="ke" style="${k.img?'display:none':''}">${k.icon}</div>
       <div class="kn">${k.name}</div>
     </div>`).join('');
 }
@@ -530,10 +679,13 @@ function renderPicker(){
     const on=role==='killer'
       ?kBuild.perks.includes(p.id)
       :sBuild.some(s=>s.perks.includes(p.id));
+    const imgHtml=p.img
+      ?`<img class="pi-img" src="${p.img}" alt="${p.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="pi-em" style="display:none">${p.icon}</span>`
+      :`<span class="pi-em">${p.icon}</span>`;
     return `<div class="pi ${p.banned?'banned':''} ${on?'pickedon':''}"
       onclick="${p.banned?"toast('🚫 Banido: "+p.name.replace(/'/g,"\\'")+"')":'addPerk("'+p.id+'")'}"
       title="${p.char} — ${p.desc}">
-      <div class="pi-in"><span class="pi-em">${p.icon}</span></div>
+      <div class="pi-in">${imgHtml}</div>
       <div class="pi-nm">${p.name}</div>
       ${p.banned?'<div class="bx">✕</div>':''}
     </div>`;
@@ -595,8 +747,16 @@ function mkSlot(id,type,idx,lbl='',isAddon=false,isOff=false,si=null){
   const banned=p?.banned;
   const cls=`slot ${p?'filled':''} ${banned?'bperk':''} ${isAddon?'aslot':''} ${isOff?'oslot':''}`;
   const sip=si!==null?`,${si}`:'';
+  let inner='';
+  if(p){
+    if(p.img){
+      inner=`<img class="slot-img" src="${p.img}" alt="${p.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="slot-em" style="display:none">${p.icon}</span>`;
+    } else {
+      inner=`<span class="slot-em">${p.icon}</span>`;
+    }
+  }
   return `<div class="${cls}" onclick="openMSlot('${type}',${idx}${sip})" title="${p?p.name:'Vazio'}">
-    <div class="slot-in">${p?`<span class="slot-em">${p.icon}</span>`:''}</div>
+    <div class="slot-in">${inner}</div>
     ${lbl?`<div class="slot-lbl">${p?p.name.substring(0,9)+(p.name.length>9?'…':''):lbl}</div>`:''}
   </div>`;
 }
@@ -619,15 +779,18 @@ function filterMSlot(){
 }
 function fillMSlot(r,search){
   const all=PERKS[r];
-  // For add-on/item slots, show all perks (no dedicated data); for perk slots, filter out addons/offerings
   const perks=all;
   const list=search?perks.filter(p=>p.name.toLowerCase().includes(search)||p.char.toLowerCase().includes(search)):perks;
-  document.getElementById('mSlotGrid').innerHTML=list.map(p=>`
-    <div class="pi ${p.banned?'banned':''}" onclick="pickSlot('${p.id}')" title="${p.char} — ${p.desc}">
-      <div class="pi-in"><span class="pi-em">${p.icon}</span></div>
+  document.getElementById('mSlotGrid').innerHTML=list.map(p=>{
+    const imgHtml=p.img
+      ?`<img class="pi-img" src="${p.img}" alt="${p.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="pi-em" style="display:none">${p.icon}</span>`
+      :`<span class="pi-em">${p.icon}</span>`;
+    return `<div class="pi ${p.banned?'banned':''}" onclick="pickSlot('${p.id}')" title="${p.char} — ${p.desc}">
+      <div class="pi-in">${imgHtml}</div>
       <div class="pi-nm">${p.name}</div>
       ${p.banned?'<div class="bx">✕</div>':''}
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function pickSlot(id){
   const {type,idx,si}=mctx;
