@@ -481,183 +481,212 @@ const BANNED_COMBOS={
 };
 
 // ══════════════════════════════════════════════════════════════
-// IMAGE SYSTEM v3 — Multi-source fallback chain
-//   1. Wikia CDN resized  (/revision/latest/scale-to-width-down/80) ← PRIMARY
-//   2. Wikia CDN direct   (no resize param)
-//   3. GitHub dearvoodoo  (older repo, missing post-2021 perks)
-//   4. Emoji              (never fails — always visible)
+// IMAGE SYSTEM v4 — 4-source fallback chain
 //
-// Perk  : perk_tag  (e.g. HexRuin, BarbecueAndChilli)
-// Killer: name_tag  (e.g. TR, HB, GF)
+// Priority per perk:
+//   1. upsetdog/dbd-assets  (raw.githubusercontent, active repo, 2024+)
+//   2. DanteASC4/dbd-assets-simple (raw.githubusercontent, secondary)
+//   3. Wikia CDN resized    (/revision/latest/scale-to-width-down/80)
+//   4. Emoji                (always works)
+//
+// Priority per killer portrait:
+//   1. upsetdog/dbd-assets/killers/  (portrait_*.png)
+//   2. DanteASC4/dbd-assets-simple/killers/
+//   3. Wikia CDN resized (KWK1)
+//   4. Icon emoji div (always works)
 // ══════════════════════════════════════════════════════════════
 
-const GH   = t => `https://raw.githubusercontent.com/dearvoodoo/dbd/master/Perks/${t}.png`;
+// URL builders — all raw GitHub, no CORS issues from browser
+const UP    = n => `https://raw.githubusercontent.com/upsetdog/dbd-assets/main/icons/${n}.png`;
+const DA    = n => `https://raw.githubusercontent.com/DanteASC4/dbd-assets-simple/main/icons/${n}.png`;
 const WK1  = (h,f) => `https://static.wikia.nocookie.net/deadbydaylight_gamepedia/images/${h}/${f}/revision/latest/scale-to-width-down/80?cb=20240601`;
 const WK2  = (h,f) => `https://static.wikia.nocookie.net/deadbydaylight_gamepedia/images/${h}/${f}`;
-const KGH  = t => `https://raw.githubusercontent.com/dearvoodoo/dbd/master/Killers/PreviewPortrait/${t}.png`;
+const KUP   = n => `https://raw.githubusercontent.com/upsetdog/dbd-assets/main/killers/portrait_${n}.png`;
+const KDA   = n => `https://raw.githubusercontent.com/DanteASC4/dbd-assets-simple/main/killers/${n}.png`;
 const KWK1 = (h,f) => `https://static.wikia.nocookie.net/deadbydaylight_gamepedia/images/${h}/${f}/revision/latest/scale-to-width-down/180?cb=20240601`;
 const KWK2 = (h,f) => `https://static.wikia.nocookie.net/deadbydaylight_gamepedia/images/${h}/${f}`;
 
-// [perk_tag (GitHub filename), wikia_hash, wikia_filename]
+// Legacy aliases used by canvas generator
+const GH   = t => UP(`iconPerks_${t}`);
+const KGH  = t => KUP(t.toLowerCase());
+
+// ── PERK DATA ────────────────────────────────────────────────
+// [upsetdog_name, wikia_hash, wikia_file]
+// upsetdog_name = "iconPerks_PerkName" (without .png)
 const PERK_DATA = {
-  k_ruin:       ['HexRuin',                 '7/73','IconPerks_hexRuin.png'],
-  k_devour:     ['HexDevourHope',           '4/4c','IconPerks_hexDevourHope.png'],
-  k_noed:       ['HexNoOneEscapesDeath',    'a/a7','IconPerks_hexNoOneEscapesDeath.png'],
-  k_painres:    ['ScourgeHookPainResonance','9/93','IconPerks_scourgeHookPainResonance.png'],
-  k_deadlock:   ['Deadlock',                '3/3f','IconPerks_deadlock.png'],
-  k_corrupt:    ['CorruptIntervention',     '0/0f','IconPerks_corruptIntervention.png'],
-  k_grim:       ['GrimEmbrace',             '2/26','IconPerks_grimEmbrace.png'],
-  k_bbq:        ['BarbecueAndChilli',       '9/9c','IconPerks_barbecueAndChilli.png'],
-  k_lethal:     ['LethalPursuer',           '7/72','IconPerks_lethalPursuer.png'],
-  k_dms:        ['DeadMansSwitch',          '2/2d','IconPerks_deadMansSwitch.png'],
-  k_pop:        ['PopGoesTheWeasel',        '3/3a','IconPerks_popGoesTheWeasel.png'],
-  k_stbfl:      ['SaveTheBestForLast',      'b/b0','IconPerks_saveTheBestForLast.png'],
-  k_enduring:   ['Enduring',                '0/07','IconPerks_enduring.png'],
-  k_spiritfury: ['SpiritFury',              '8/8a','IconPerks_spiritFury.png'],
-  k_undying:    ['HexUndying',              '4/43','IconPerks_hexUndying.png'],
-  k_eruption:   ['Eruption',                '1/1d','IconPerks_eruption.png'],
-  k_ult:        ['UltimateWeapon',          'e/e0','IconPerks_ultimateWeapon.png'],
-  k_monitor:    ['MonitorAndAbuse',         '0/06','IconPerks_monitorAndAbuse.png'],
-  k_bamboozle:  ['Bamboozle',               '5/5d','IconPerks_bamboozle.png'],
-  k_surge:      ['Surge',                   '5/57','IconPerks_surge.png'],
-  k_overcharge: ['Overcharge',              '5/5e','IconPerks_overcharge.png'],
-  k_tinkerer:   ['Tinkerer',                'a/a8','IconPerks_tinkerer.png'],
-  k_knockout:   ['KnockOut',                '6/65','IconPerks_knockOut.png'],
-  k_haunted:    ['HexHauntedGround',        '6/6a','IconPerks_hexHauntedGround.png'],
-  k_starstruck: ['Starstruck',              '7/7e','IconPerks_starstruck.png'],
-  k_noWayOut:   ['NoWayOut',                'f/f8','IconPerks_noWayOut.png'],
-  k_thrilling:  ['ThrillingTremors',        '0/00','IconPerks_thrillingTremors.png'],
-  k_iears:      ['ImAllEars',               '6/6c','IconPerks_imAllEars.png'],
-  k_discordance:['Discordance',             '1/11','IconPerks_discordance.png'],
-  k_surveillance:['Surveillance',           'e/e9','IconPerks_surveillance.png'],
-  k_callbrine:  ['CallOfBrine',             '7/74','IconPerks_callOfBrine.png'],
-  k_dissolution:['Dissolution',             '8/80','IconPerks_dissolution.png'],
-  k_myc:        ['MakeYourChoice',          '6/6e','IconPerks_makeYourChoice.png'],
-  k_hubris:     ['Hubris',                  '5/5b','IconPerks_hubris.png'],
-  k_nowhere:    ['NowhereToHide',           'a/ac','IconPerks_nowhereToHide.png'],
-  k_oppression: ['Oppression',              '0/07','IconPerks_oppression.png'],
-  k_gearhead:   ['Gearhead',                'c/c6','IconPerks_gearhead.png'],
-  k_rancor:     ['Rancor',                  '1/1a','IconPerks_rancor.png'],
-  k_sloppy:     ['SloppyButcher',           '2/2c','IconPerks_sloppyButcher.png'],
-  k_deerstalker:['Deerstalker',             '4/4b','IconPerks_deerstalker.png'],
-  k_whispers:   ['Whispers',                '3/33','IconPerks_whispers.png'],
-  k_coulro:     ['Coulrophobia',            'c/c3','IconPerks_coulrophobia.png'],
-  k_ironmaiden: ['IronMaiden',              '7/77','IconPerks_ironMaiden.png'],
-  k_bloodecho:  ['BloodEcho',               '9/94','IconPerks_bloodEcho.png'],
-  k_zanshin:    ['ZanshinTactics',          '3/34','IconPerks_zanshinTactics.png'],
-  k_predator:   ['Predator',                'b/b5','IconPerks_predator.png'],
-  k_territorial:['TerritorialImperative',   '8/89','IconPerks_territorialImperative.png'],
-  s_ds:         ['DecisiveStrike',          '8/8e','IconPerks_decisiveStrike.png'],
-  s_otr:        ['OffTheRecord',            '3/37','IconPerks_offTheRecord.png'],
-  s_borrowed:   ['BorrowedTime',            '9/91','IconPerks_borrowedTime.png'],
-  s_unbreak:    ['Unbreakable',             '3/34','IconPerks_unbreakable.png'],
-  s_dh:         ['DeadHard',                'b/b3','IconPerks_deadHard.png'],
-  s_coh:        ['BoonCircleOfHealing',     'a/a1','IconPerks_boonCircleOfHealing.png'],
-  s_sb:         ['SprintBurst',             '3/30','IconPerks_sprintBurst.png'],
-  s_distort:    ['Distortion',              'c/c3','IconPerks_distortion.png'],
-  s_kindred:    ['Kindred',                 'd/da','IconPerks_kindred.png'],
-  s_adren:      ['Adrenaline',              '0/0d','IconPerks_adrenaline.png'],
-  s_windows:    ['WindowsOfOpportunity',    '7/7b','IconPerks_windowsOfOpportunity.png'],
-  s_lithe:      ['Lithe',                   '6/6e','IconPerks_lithe.png'],
-  s_balanced:   ['BalancedLanding',         '7/73','IconPerks_balancedLanding.png'],
-  s_prove:      ['ProveThyself',            '8/8d','IconPerks_proveThyself.png'],
-  s_ironwill:   ['IronWill',                'e/e6','IconPerks_ironWill.png'],
-  s_made:       ['MadeForThis',             '3/3f','IconPerks_madeForThis.png'],
-  s_dramaturgy: ['Dramaturgy',              '2/24','IconPerks_dramaturgy.png'],
-  s_weave:      ['WeaveAttunement',         '9/9d','IconPerks_weaveAttunement.png'],
-  s_lucky:      ['LuckyBreak',              '1/10','IconPerks_luckyBreak.png'],
-  s_headon:     ['HeadOn',                  'c/c0','IconPerks_headOn.png'],
-  s_overcome:   ['Overcome',                '0/0d','IconPerks_overcome.png'],
-  s_smash:      ['SmashHit',                '1/10','IconPerks_smashHit.png'],
-  s_resilience: ['Resilience',              'f/f8','IconPerks_resilience.png'],
-  s_inner:      ['InnerStrength',           '6/61','IconPerks_innerStrength.png'],
-  s_fogwise:    ['Fogwise',                 'c/c3','IconPerks_fogwise.png'],
-  s_otr2:       ['OffTheRecord',            '3/37','IconPerks_offTheRecord.png'],
-  s_bond:       ['Bond',                    '5/5e','IconPerks_bond.png'],
-  s_empathy:    ['Empathy',                 '7/7e','IconPerks_empathy.png'],
-  s_alert:      ['Alert',                   '4/4a','IconPerks_alert.png'],
-  s_urban:      ['UrbanEvasion',            '4/42','IconPerks_urbanEvasion.png'],
-  s_dance:      ['DanceWithMe',             'd/dc','IconPerks_danceWithMe.png'],
-  s_innerf:     ['InnerFocus',              'b/be','IconPerks_innerFocus.png'],
-  s_overzeal:   ['Overzealous',             'd/d5','IconPerks_overzealous.png'],
-  s_quickg:     ['QuickGambit',             'b/b7','IconPerks_quickGambit.png'],
-  s_friendly:   ['FriendlyCompetition',     'f/f5','IconPerks_friendlyCompetition.png'],
-  s_saboteur:   ['Saboteur',                'b/b1','IconPerks_saboteur.png'],
-  s_selfcare:   ['SelfCare',                'f/f2','IconPerks_selfCare.png'],
-  s_botany:     ['BotanyKnowledge',         'a/aa','IconPerks_botanyKnowledge.png'],
-  s_vigil:      ['Vigil',                   '2/26','IconPerks_vigil.png'],
-  s_smallg:     ['SmallGame',               'b/bd','IconPerks_smallGame.png'],
-  s_openhand:   ['OpenHanded',              'c/ca','IconPerks_openHanded.png'],
-  s_plunder:    ['PlunderersInstinct',       '0/04','IconPerks_plunderersInstinct.png'],
+  // Killer — General
+  k_ruin:        ['iconPerks_HexRuin',                  '7/73','IconPerks_hexRuin.png'],
+  k_devour:      ['iconPerks_HexDevourHope',            '4/4c','IconPerks_hexDevourHope.png'],
+  k_noed:        ['iconPerks_HexNoOneEscapesDeath',     'a/a7','IconPerks_hexNoOneEscapesDeath.png'],
+  k_painres:     ['iconPerks_ScourgeHookPainResonance', '9/93','IconPerks_scourgeHookPainResonance.png'],
+  k_deadlock:    ['iconPerks_Deadlock',                 '3/3f','IconPerks_deadlock.png'],
+  k_corrupt:     ['iconPerks_CorruptIntervention',      '0/0f','IconPerks_corruptIntervention.png'],
+  k_grim:        ['iconPerks_GrimEmbrace',              '2/26','IconPerks_grimEmbrace.png'],
+  k_bbq:         ['iconPerks_BarbecueAndChilli',        '9/9c','IconPerks_barbecueAndChilli.png'],
+  k_lethal:      ['iconPerks_LethalPursuer',            '7/72','IconPerks_lethalPursuer.png'],
+  k_dms:         ['iconPerks_DeadMansSwitch',           '2/2d','IconPerks_deadMansSwitch.png'],
+  k_pop:         ['iconPerks_PopGoesTheWeasel',         '3/3a','IconPerks_popGoesTheWeasel.png'],
+  k_stbfl:       ['iconPerks_SaveTheBestForLast',       'b/b0','IconPerks_saveTheBestForLast.png'],
+  k_enduring:    ['iconPerks_Enduring',                 '0/07','IconPerks_enduring.png'],
+  k_spiritfury:  ['iconPerks_SpiritFury',               '8/8a','IconPerks_spiritFury.png'],
+  k_undying:     ['iconPerks_HexUndying',               '4/43','IconPerks_hexUndying.png'],
+  k_eruption:    ['iconPerks_Eruption',                 '1/1d','IconPerks_eruption.png'],
+  k_ult:         ['iconPerks_UltimateWeapon',           'e/e0','IconPerks_ultimateWeapon.png'],
+  // Killer — Tier 4
+  k_monitor:     ['iconPerks_MonitorAndAbuse',          '0/06','IconPerks_monitorAndAbuse.png'],
+  k_bamboozle:   ['iconPerks_Bamboozle',                '5/5d','IconPerks_bamboozle.png'],
+  k_surge:       ['iconPerks_Surge',                    '5/57','IconPerks_surge.png'],
+  k_overcharge:  ['iconPerks_Overcharge',               '5/5e','IconPerks_overcharge.png'],
+  k_tinkerer:    ['iconPerks_Tinkerer',                 'a/a8','IconPerks_tinkerer.png'],
+  k_knockout:    ['iconPerks_KnockOut',                 '6/65','IconPerks_knockOut.png'],
+  k_haunted:     ['iconPerks_HexHauntedGround',         '6/6a','IconPerks_hexHauntedGround.png'],
+  k_starstruck:  ['iconPerks_Starstruck',               '7/7e','IconPerks_starstruck.png'],
+  k_noWayOut:    ['iconPerks_NoWayOut',                 'f/f8','IconPerks_noWayOut.png'],
+  k_thrilling:   ['iconPerks_ThrillingTremors',         '0/00','IconPerks_thrillingTremors.png'],
+  k_iears:       ['iconPerks_ImAllEars',                '6/6c','IconPerks_imAllEars.png'],
+  k_discordance: ['iconPerks_Discordance',              '1/11','IconPerks_discordance.png'],
+  k_surveillance:['iconPerks_Surveillance',             'e/e9','IconPerks_surveillance.png'],
+  k_callbrine:   ['iconPerks_CallOfBrine',              '7/74','IconPerks_callOfBrine.png'],
+  k_dissolution: ['iconPerks_Dissolution',              '8/80','IconPerks_dissolution.png'],
+  k_myc:         ['iconPerks_MakeYourChoice',           '6/6e','IconPerks_makeYourChoice.png'],
+  k_hubris:      ['iconPerks_Hubris',                   '5/5b','IconPerks_hubris.png'],
+  k_nowhere:     ['iconPerks_NowhereToHide',            'a/ac','IconPerks_nowhereToHide.png'],
+  k_oppression:  ['iconPerks_Oppression',               '0/07','IconPerks_oppression.png'],
+  k_gearhead:    ['iconPerks_Gearhead',                 'c/c6','IconPerks_gearhead.png'],
+  k_rancor:      ['iconPerks_Rancor',                   '1/1a','IconPerks_rancor.png'],
+  // Killer — Tier 3
+  k_sloppy:      ['iconPerks_SloppyButcher',            '2/2c','IconPerks_sloppyButcher.png'],
+  k_deerstalker: ['iconPerks_Deerstalker',              '4/4b','IconPerks_deerstalker.png'],
+  k_whispers:    ['iconPerks_Whispers',                 '3/33','IconPerks_whispers.png'],
+  k_coulro:      ['iconPerks_Coulrophobia',             'c/c3','IconPerks_coulrophobia.png'],
+  k_ironmaiden:  ['iconPerks_IronMaiden',               '7/77','IconPerks_ironMaiden.png'],
+  k_bloodecho:   ['iconPerks_BloodEcho',                '9/94','IconPerks_bloodEcho.png'],
+  // Killer — Tier 2/1
+  k_zanshin:     ['iconPerks_ZanshinTactics',           '3/34','IconPerks_zanshinTactics.png'],
+  k_predator:    ['iconPerks_Predator',                 'b/b5','IconPerks_predator.png'],
+  k_territorial: ['iconPerks_TerritorialImperative',    '8/89','IconPerks_territorialImperative.png'],
+  // Survivor — General (banned)
+  s_ds:          ['iconPerks_DecisiveStrike',           '8/8e','IconPerks_decisiveStrike.png'],
+  s_otr:         ['iconPerks_OffTheRecord',             '3/37','IconPerks_offTheRecord.png'],
+  s_borrowed:    ['iconPerks_BorrowedTime',             '9/91','IconPerks_borrowedTime.png'],
+  s_unbreak:     ['iconPerks_Unbreakable',              '3/34','IconPerks_unbreakable.png'],
+  s_dh:          ['iconPerks_DeadHard',                 'b/b3','IconPerks_deadHard.png'],
+  s_coh:         ['iconPerks_BoonCircleOfHealing',      'a/a1','IconPerks_boonCircleOfHealing.png'],
+  s_sb:          ['iconPerks_SprintBurst',              '3/30','IconPerks_sprintBurst.png'],
+  // Survivor — General (allowed)
+  s_distort:     ['iconPerks_Distortion',               'c/c3','IconPerks_distortion.png'],
+  s_kindred:     ['iconPerks_Kindred',                  'd/da','IconPerks_kindred.png'],
+  s_adren:       ['iconPerks_Adrenaline',               '0/0d','IconPerks_adrenaline.png'],
+  s_windows:     ['iconPerks_WindowsOfOpportunity',     '7/7b','IconPerks_windowsOfOpportunity.png'],
+  s_lithe:       ['iconPerks_Lithe',                    '6/6e','IconPerks_lithe.png'],
+  s_balanced:    ['iconPerks_BalancedLanding',          '7/73','IconPerks_balancedLanding.png'],
+  s_prove:       ['iconPerks_ProveThyself',             '8/8d','IconPerks_proveThyself.png'],
+  s_ironwill:    ['iconPerks_IronWill',                 'e/e6','IconPerks_ironWill.png'],
+  s_made:        ['iconPerks_MadeForThis',              '3/3f','IconPerks_madeForThis.png'],
+  s_dramaturgy:  ['iconPerks_Dramaturgy',               '2/24','IconPerks_dramaturgy.png'],
+  s_weave:       ['iconPerks_WeaveAttunement',          '9/9d','IconPerks_weaveAttunement.png'],
+  s_lucky:       ['iconPerks_LuckyBreak',               '1/10','IconPerks_luckyBreak.png'],
+  // Survivor — Tier 4
+  s_headon:      ['iconPerks_HeadOn',                   'c/c0','IconPerks_headOn.png'],
+  s_overcome:    ['iconPerks_Overcome',                 '0/0d','IconPerks_overcome.png'],
+  s_smash:       ['iconPerks_SmashHit',                 '1/10','IconPerks_smashHit.png'],
+  s_resilience:  ['iconPerks_Resilience',               'f/f8','IconPerks_resilience.png'],
+  s_inner:       ['iconPerks_InnerStrength',            '6/61','IconPerks_innerStrength.png'],
+  s_fogwise:     ['iconPerks_Fogwise',                  'c/c3','IconPerks_fogwise.png'],
+  s_otr2:        ['iconPerks_OffTheRecord',             '3/37','IconPerks_offTheRecord.png'],
+  // Survivor — Tier 3
+  s_bond:        ['iconPerks_Bond',                     '5/5e','IconPerks_bond.png'],
+  s_empathy:     ['iconPerks_Empathy',                  '7/7e','IconPerks_empathy.png'],
+  s_alert:       ['iconPerks_Alert',                    '4/4a','IconPerks_alert.png'],
+  s_urban:       ['iconPerks_UrbanEvasion',             '4/42','IconPerks_urbanEvasion.png'],
+  s_dance:       ['iconPerks_DanceWithMe',              'd/dc','IconPerks_danceWithMe.png'],
+  s_innerf:      ['iconPerks_InnerFocus',               'b/be','IconPerks_innerFocus.png'],
+  s_overzeal:    ['iconPerks_Overzealous',              'd/d5','IconPerks_overzealous.png'],
+  s_quickg:      ['iconPerks_QuickGambit',              'b/b7','IconPerks_quickGambit.png'],
+  s_friendly:    ['iconPerks_FriendlyCompetition',      'f/f5','IconPerks_friendlyCompetition.png'],
+  s_saboteur:    ['iconPerks_Saboteur',                 'b/b1','IconPerks_saboteur.png'],
+  // Survivor — Tier 2/1
+  s_selfcare:    ['iconPerks_SelfCare',                 'f/f2','IconPerks_selfCare.png'],
+  s_botany:      ['iconPerks_BotanyKnowledge',          'a/aa','IconPerks_botanyKnowledge.png'],
+  s_vigil:       ['iconPerks_Vigil',                    '2/26','IconPerks_vigil.png'],
+  s_smallg:      ['iconPerks_SmallGame',                'b/bd','IconPerks_smallGame.png'],
+  s_openhand:    ['iconPerks_OpenHanded',               'c/ca','IconPerks_openHanded.png'],
+  s_plunder:     ['iconPerks_PlunderersInstinct',        '0/04','IconPerks_plunderersInstinct.png'],
 };
 
-// [name_tag (GitHub), wikia_hash, wikia_file]
+// ── KILLER DATA ──────────────────────────────────────────────
+// [upsetdog_name, dante_name, wikia_hash, wikia_file]
+// upsetdog killers: portrait_trapper.png, portrait_wraith.png etc.
 const KILLER_DATA = {
-  trapper:     ['TR','3/3a','K01_charPreview.png'],
-  wraith:      ['WR','e/e2','K02_charPreview.png'],
-  hillbilly:   ['HB','f/f9','K03_charPreview.png'],
-  nurse:       ['TN','e/e7','K04_charPreview.png'],
-  shape:       ['MM','3/33','K05_charPreview.png'],
-  hag:         ['TH','0/03','K06_charPreview.png'],
-  doctor:      ['TD','d/d0','K07_charPreview.png'],
-  huntress:    ['HU','0/0e','K08_charPreview.png'],
-  leatherface: ['LF','5/5a','K09_charPreview.png'],
-  freddy:      ['FK','0/08','K10_charPreview.png'],
-  pig:         ['PG','1/17','K11_charPreview.png'],
-  clown:       ['CL','4/47','K12_charPreview.png'],
-  spirit:      ['SP','f/f7','K13_charPreview.png'],
-  legion:      ['LE','3/35','K14_charPreview.png'],
-  plague:      ['PL','6/6e','K15_charPreview.png'],
-  ghostface:   ['GF','7/76','K16_charPreview.png'],
-  demo:        ['DM','7/7b','K17_charPreview.png'],
-  oni:         ['ON','9/94','K18_charPreview.png'],
-  deathslinger:['DS','1/15','K19_charPreview.png'],
-  ph:          ['PH','9/9d','K20_charPreview.png'],
-  twins:       ['TW','d/d7','K21_charPreview.png'],
-  trickster:   ['JK','2/2a','K22_charPreview.png'],
-  nemesis:     ['NM','2/29','K23_charPreview.png'],
-  pinhead:     ['CE','d/dc','K24_charPreview.png'],
-  artist:      ['AR','a/a0','K25_charPreview.png'],
-  onryo:       ['SD','f/f7','K26_charPreview.png'],
-  dredge:      ['DR','f/fa','K27_charPreview.png'],
-  wesker:      ['AW','6/61','K28_charPreview.png'],
-  knight:      ['KN','f/f4','K29_charPreview.png'],
-  skull:       ['SM','4/46','K30_charPreview.png'],
-  sing:        ['SG','6/6a','K31_charPreview.png'],
-  xeno:        ['XN','7/7e','K32_charPreview.png'],
-  chucky:      ['CK','4/4d','K33_charPreview.png'],
-  unknown:     ['UK','e/e5','K34_charPreview.png'],
-  lich:        ['LI','e/e5','K34_charPreview.png'],
-  dracula:     ['VL','7/7c','K36_charPreview.png'],
+  trapper:     ['trapper',     'trapper',     '3/3a','K01_charPreview.png'],
+  wraith:      ['wraith',      'wraith',      'e/e2','K02_charPreview.png'],
+  hillbilly:   ['hillbilly',   'hillbilly',   'f/f9','K03_charPreview.png'],
+  nurse:       ['nurse',       'nurse',       'e/e7','K04_charPreview.png'],
+  shape:       ['shape',       'shape',       '3/33','K05_charPreview.png'],
+  hag:         ['hag',         'hag',         '0/03','K06_charPreview.png'],
+  doctor:      ['doctor',      'doctor',      'd/d0','K07_charPreview.png'],
+  huntress:    ['huntress',    'huntress',    '0/0e','K08_charPreview.png'],
+  leatherface: ['leatherface', 'leatherface', '5/5a','K09_charPreview.png'],
+  freddy:      ['freddy',      'freddy',      '0/08','K10_charPreview.png'],
+  pig:         ['pig',         'pig',         '1/17','K11_charPreview.png'],
+  clown:       ['clown',       'clown',       '4/47','K12_charPreview.png'],
+  spirit:      ['spirit',      'spirit',      'f/f7','K13_charPreview.png'],
+  legion:      ['legion',      'legion',      '3/35','K14_charPreview.png'],
+  plague:      ['plague',      'plague',      '6/6e','K15_charPreview.png'],
+  ghostface:   ['ghostface',   'ghostface',   '7/76','K16_charPreview.png'],
+  demo:        ['demogorgon',  'demogorgon',  '7/7b','K17_charPreview.png'],
+  oni:         ['oni',         'oni',         '9/94','K18_charPreview.png'],
+  deathslinger:['deathslinger','deathslinger','1/15','K19_charPreview.png'],
+  ph:          ['pyramidhead', 'pyramidhead', '9/9d','K20_charPreview.png'],
+  twins:       ['twins',       'twins',       'd/d7','K21_charPreview.png'],
+  trickster:   ['trickster',   'trickster',   '2/2a','K22_charPreview.png'],
+  nemesis:     ['nemesis',     'nemesis',     '2/29','K23_charPreview.png'],
+  pinhead:     ['pinhead',     'pinhead',     'd/dc','K24_charPreview.png'],
+  artist:      ['artist',      'artist',      'a/a0','K25_charPreview.png'],
+  onryo:       ['onryo',       'onryo',       'f/f7','K26_charPreview.png'],
+  dredge:      ['dredge',      'dredge',      'f/fa','K27_charPreview.png'],
+  wesker:      ['wesker',      'wesker',      '6/61','K28_charPreview.png'],
+  knight:      ['knight',      'knight',      'f/f4','K29_charPreview.png'],
+  skull:       ['skullmerchant','skullmerchant','4/46','K30_charPreview.png'],
+  sing:        ['singularity', 'singularity', '6/6a','K31_charPreview.png'],
+  xeno:        ['xenomorph',   'xenomorph',   '7/7e','K32_charPreview.png'],
+  chucky:      ['chucky',      'chucky',      '4/4d','K33_charPreview.png'],
+  unknown:     ['unknown',     'unknown',     'e/e5','K34_charPreview.png'],
+  lich:        ['lich',        'lich',        'e/e5','K34_charPreview.png'],
+  dracula:     ['dracula',     'dracula',     '7/7c','K36_charPreview.png'],
 };
 
-// ── IMAGE RENDERING ─────────────────────────────────────────────
-// Source priority: WK1(wikia resized) → WK2(wikia direct) → GH(github) → emoji
-// onerror: explicit if/else prevents infinite loop when all sources fail
-// lazy param: false for picker (immediate load), true for build slots (deferred)
+// ── RENDER HELPERS ───────────────────────────────────────────
+// 4-source onerror chain: UP → DA → WK1 → emoji
+// Using data-s counter with explicit if/else — no infinite loop
 function perkImgHTML(perkId, icon, style, lazy) {
   const d = PERK_DATA[perkId];
   if (!d) return `<span style="font-size:20px;line-height:1;">${icon}</span>`;
-  const [tag, h, f] = d;
-  const u1 = WK1(h, f);
-  const u2 = WK2(h, f);
-  const u3 = GH(tag);
+  const [name, h, f] = d;
+  const s1 = UP(name);
+  const s2 = DA(name);
+  const s3 = WK1(h, f);
+  const s4 = WK2(h, f);
   const lz = lazy ? ' loading="lazy"' : '';
-  return `<img src="${u1}" alt="" style="${style||''}" data-s="1"${lz} onerror="if(this.dataset.s=='1'){this.dataset.s='2';this.src='${u2}';}else if(this.dataset.s=='2'){this.dataset.s='3';this.src='${u3}';}else{this.outerHTML='<span style=\'font-size:20px;line-height:1;\'>${icon}</span>';}">`;
+  return `<img src="${s1}" alt="" style="${style||''}" data-s="1"${lz} onerror="var s=this.dataset.s;if(s==='1'){this.dataset.s='2';this.src='${s2}';}else if(s==='2'){this.dataset.s='3';this.src='${s3}';}else if(s==='3'){this.dataset.s='4';this.src='${s4}';}else{this.outerHTML='<span style=\\'font-size:20px;line-height:1;\\'>${icon}</span>';}">`;
 }
 
+// 4-source chain for killer portraits: KUP → KDA → KWK1 → KWK2 → icon
 function killerImgHTML(killerId, icon, style) {
   const d = KILLER_DATA[killerId];
   if (!d) return `<div class="ke">${icon}</div>`;
-  const [tag, h, f] = d;
-  const u1 = KWK1(h, f);
-  const u2 = KWK2(h, f);
-  const u3 = KGH(tag);
-  return `<img src="${u1}" alt="" style="${style||''}" data-s="1" loading="lazy" onerror="if(this.dataset.s=='1'){this.dataset.s='2';this.src='${u2}';}else if(this.dataset.s=='2'){this.dataset.s='3';this.src='${u3}';}else{this.outerHTML='<div class=\'ke\'>${icon}</div>';}">`;
+  const [kup, kda, h, f] = d;
+  const s1 = KUP(kup);
+  const s2 = KDA(kda);
+  const s3 = KWK1(h, f);
+  const s4 = KWK2(h, f);
+  return `<img src="${s1}" alt="" style="${style||''};display:block;" data-s="1" loading="lazy" onerror="var s=this.dataset.s;if(s==='1'){this.dataset.s='2';this.src='${s2}';}else if(s==='2'){this.dataset.s='3';this.src='${s3}';}else if(s==='3'){this.dataset.s='4';this.src='${s4}';}else{this.outerHTML='<div class=\\'ke\\'>${icon}</div>';}">`;
 }
-// Shims used by canvas loadout generator (picks first source, browser handles fallback)
-const PERK_IMGS   = Object.fromEntries(Object.entries(PERK_DATA).map(([id,[_t,h,f]])=>[id,WK1(h,f)]));
-const KILLER_IMGS = Object.fromEntries(Object.entries(KILLER_DATA).map(([id,[_t,h,f]])=>[id,KWK1(h,f)]));
+
+// Canvas loadout shims — uses loadImgFallback with all 4 sources
+const PERK_IMGS   = Object.fromEntries(Object.entries(PERK_DATA).map(([id,[n]])=>[id,UP(n)]));
+const KILLER_IMGS = Object.fromEntries(Object.entries(KILLER_DATA).map(([id,[k]])=>[id,KUP(k)]));
+
 
 const GLOBAL_NOTES=`• Mapas mudados ou novos adicionados como opção
 • Ban Second Wind confirmado — muito forte no meta
@@ -1107,15 +1136,15 @@ async function loadImgFallback(sources){
 function getPerkImgSources(perkId){
   const d=PERK_DATA[perkId];
   if(!d) return [];
-  const [tag,h,f]=d;
-  return [WK1(h,f), WK2(h,f), GH(tag)];
+  const [n,h,f]=d;
+  return [UP(n), DA(n), WK1(h,f), WK2(h,f)];
 }
 
 function getKillerImgSources(killerId){
   const d=KILLER_DATA[killerId];
   if(!d) return [];
-  const [tag,h,f]=d;
-  return [KWK1(h,f), KWK2(h,f), KGH(tag)];
+  const [k,kd,h,f]=d;
+  return [KUP(k), KDA(kd), KWK1(h,f), KWK2(h,f)];
 }
 
 async function generateLoadoutCanvas(){
